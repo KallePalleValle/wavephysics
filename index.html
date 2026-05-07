@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polarization States</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1a1a1a;
+    --paper: #faf8f3;
+    --accent: #b8341f;
+    --wave: #2c5f7c;
+    --warm: #d97420;
+    --good: #2f9e44;
+    --grid: #d8d2c4;
+    --muted: #6b6459;
+    --rule: #2a2520;
+
+    /* Field colors for this app */
+    --fx: #2c5f7c;        /* Ex — teal blue */
+    --fy: #d97420;        /* Ey — warm orange */
+    --total: #2f9e44;     /* total E (probe) — green */
+    --propagation: #1a1a1a;  /* z direction (propagation) — ink */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding: 14px 32px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 30px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    top: 4px; left: 32px; right: 32px;
+    height: 1px;
+    background: var(--rule);
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 32px 28px;
+    max-width: 1700px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 18px;
+    min-height: 0;
+  }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 18px 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-label {
+    position: absolute;
+    top: -9px;
+    left: 18px;
+    background: var(--bg);
+    padding: 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  #three {
+    width: 100%;
+    height: 480px;
+    display: block;
+    border-radius: 0;
+  }
+  #three canvas { display: block; }
+
+  #ellipse {
+    width: 100%;
+    height: 480px;
+    background: transparent;
+    display: block;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 3px; flex-shrink: 0; }
+
+  .play-pill {
+    margin-left: auto;
+  }
+
+  /* Controls section */
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px 24px;
+  }
+
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+  .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--rule);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+
+  /* Buttons */
+  button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 7px 12px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button.active { background: var(--ink); color: var(--paper); }
+
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .preset-row button { flex: 1; padding: 6px 8px; }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .check-row input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+
+  /* Readout cards */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  .stat {
+    border: 1px solid var(--grid);
+    background: var(--bg);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat .v {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink);
+  }
+  .stat .v.accent { color: var(--accent); }
+
+  .play-btn {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .play-btn:hover { background: var(--accent); color: var(--paper); }
+
+  .signature {
+    position: fixed;
+    right: 14px;
+    bottom: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1100px) {
+    .top-row { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Polarization States</h1>
+
+</header>
+
+<main>
+
+  <div class="top-row">
+
+    <div class="panel">
+      <span class="panel-label">Field Components in Time</span>
+      <div class="legend">
+        <div class="legend-item"><div class="swatch" style="background: var(--fx);"></div>Eₓ along x</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--fy);"></div>Eᵧ along y</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--propagation);"></div>z (propagation)</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--total);"></div>Total E (probe)</div>
+        <button id="toggleAnim" class="play-btn play-pill">▶ Play</button>
+      </div>
+      <div id="three"></div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">Polarization State (Eₓ vs Eᵧ)</span>
+      <svg id="ellipse" viewBox="-1.2 -1.2 2.4 2.4" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <span class="panel-label">Controls</span>
+
+    <div class="controls-grid">
+
+      <!-- Phase difference δ with preset buttons -->
+      <div class="control">
+        <div class="slider-row">
+          <label>Phase difference δ</label>
+          <span class="value" id="outDelta">0.00 rad</span>
+        </div>
+        <div class="preset-row">
+          <button type="button" class="presetBtn" data-delta="0">0</button>
+          <button type="button" class="presetBtn" data-delta="1.5707963267948966">π/2</button>
+          <button type="button" class="presetBtn" data-delta="3.141592653589793">π</button>
+          <button type="button" class="presetBtn" data-delta="4.71238898038469">3π/2</button>
+        </div>
+        <input id="delta" type="range" min="0" max="6.283185307179586" step="0.001" value="0">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Time offset t₀</label><span class="value" id="outT0">0.00 rad</span></div>
+        <input id="t0" type="range" min="0" max="6.283185307179586" step="0.001" value="0">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Amplitude Aₓ</label><span class="value" id="outAx">1.00</span></div>
+        <input id="Ax" type="range" min="0" max="2" step="0.01" value="1">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Amplitude Aᵧ</label><span class="value" id="outAy">1.00</span></div>
+        <input id="Ay" type="range" min="0" max="2" step="0.01" value="1">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Probe time t</label><span class="value" id="outProbe">3.14</span></div>
+        <input id="probe" type="range" min="0" max="6.283185307179586" step="0.001" value="3.141592653589793">
+      </div>
+
+      <div class="control" style="justify-content: center;">
+        <label class="check-row">
+          <input id="planes" type="checkbox">
+          Show reference planes
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="panel-label">Polarization Readout</span>
+    <div class="stats">
+      <div class="stat"><div class="k">Azimuth θ (deg)</div><div class="v" id="statTheta">0.00</div></div>
+      <div class="stat"><div class="k">Ellipticity ε (deg)</div><div class="v" id="statEps">0.00</div></div>
+      <div class="stat"><div class="k">Ellipticity e = tan ε</div><div class="v" id="statEll">0.00</div></div>
+      <div class="stat"><div class="k">Degree of pol. p</div><div class="v" id="statP">1.00</div></div>
+      <div class="stat"><div class="k">Handedness</div><div class="v accent" id="statHand">Linear</div></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="signature">RM</div>
+
+<!-- Three.js -->
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  const TAU = Math.PI*2;
+
+  // Read CSS variables for colors
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = {
+    bg:     cssVar('--paper')        || '#faf8f3',
+    ink:    cssVar('--ink')          || '#1a1a1a',
+    muted:  cssVar('--muted')        || '#6b6459',
+    grid:   cssVar('--grid')         || '#d8d2c4',
+    fx:     cssVar('--fx')           || '#2c5f7c',
+    fy:     cssVar('--fy')           || '#d97420',
+    total:  cssVar('--total')        || '#2f9e44',
+    accent: cssVar('--accent')       || '#b8341f',
+  };
+  function hexNum(hex){
+    const h = hex.replace('#','');
+    return parseInt(h.length === 3
+      ? h.split('').map(c=>c+c).join('')
+      : h, 16);
+  }
+
+  // DOM
+  const elThree = document.getElementById('three');
+  const svg = document.getElementById('ellipse');
+
+  const sTheta = document.getElementById('statTheta');
+  const sEps   = document.getElementById('statEps');
+  const sEll   = document.getElementById('statEll');
+  const sP     = document.getElementById('statP');
+  const sHand  = document.getElementById('statHand');
+
+  const inputs = {
+    delta: document.getElementById('delta'),
+    t0:    document.getElementById('t0'),
+    Ax:    document.getElementById('Ax'),
+    Ay:    document.getElementById('Ay'),
+    probe: document.getElementById('probe'),
+    planes:document.getElementById('planes'),
+  };
+  const outs = {
+    delta: document.getElementById('outDelta'),
+    t0:    document.getElementById('outT0'),
+    Ax:    document.getElementById('outAx'),
+    Ay:    document.getElementById('outAy'),
+    probe: document.getElementById('outProbe'),
+  };
+
+  let state = {
+    delta: 0, t0: 0, Ax: 1, Ay: 1, probe: Math.PI,
+    planes: false, anim: false
+  };
+
+  // ============================================================
+  // 3D scene
+  // ============================================================
+  // Axis convention (NEW per user request):
+  //   3D x  → time t (going right, length TAU)
+  //   3D y  → Eᵧ field axis (going UP)            ← was Eₓ before
+  //   3D z  → Eₓ field axis, but pointing into screen (we plot at 3D-z = -Eₓ)
+  //
+  // Functions Ex(t), Ey(t) compute the physical field values; we map them to 3D coordinates as:
+  //   point3D = (t,  Ey_value,  -Ex_value)
+  // This swaps the labels relative to the original layout (where y was Eₓ and z was Eᵧ).
+  function Ex(t){ return state.Ax * Math.cos(t - state.t0); }
+  function Ey(t){ return state.Ay * Math.cos(t - state.t0 + state.delta); }
+
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(elThree.clientWidth, elThree.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setClearColor(hexNum(COL.bg), 1);
+  elThree.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(hexNum(COL.bg));
+
+  const camera = new THREE.PerspectiveCamera(40, elThree.clientWidth/elThree.clientHeight, 0.1, 100);
+  camera.position.set(6.5, 4.0, 5.2);
+  camera.lookAt(3.14, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.4);
+  dir.position.set(5,6,7);
+  scene.add(dir);
+
+  // ---------- Axes ----------
+  function mkAxis(from, to, color, width=1){
+    const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...from), new THREE.Vector3(...to)]);
+    const mat = new THREE.LineBasicMaterial({color, linewidth: width});
+    return new THREE.Line(geom, mat);
+  }
+  // t-axis (right): goes from origin to (TAU, 0, 0) — drawn in ink
+  const axisT = mkAxis([0,0,0],[TAU,0,0], hexNum(COL.ink));
+  // Eᵧ axis: 3D y-axis (UP). Eᵧ takes positive 3D y values. Originally was Eₓ. Color: --fy (orange).
+  const axisEy = mkAxis([0,0,0],[0,1.2,0], hexNum(COL.fy));
+  // Eₓ axis: 3D z-axis but in NEGATIVE z direction (into screen) — drawn from origin to (0,0,-1.2). Color: --fx (blue).
+  const axisEx = mkAxis([0,0,0],[0,0,-1.2], hexNum(COL.fx));
+  scene.add(axisT, axisEy, axisEx);
+
+  // Tick marks at integer multiples of π/2 along the t-axis (cosmetic)
+  const tickGroup = new THREE.Group();
+  for (let k = 0; k <= 4; k++) {
+    const tk = (k * TAU) / 4;
+    const tg = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(tk, -0.04, 0), new THREE.Vector3(tk, 0.04, 0)
+    ]);
+    tickGroup.add(new THREE.Line(tg, new THREE.LineBasicMaterial({color: hexNum(COL.muted)})));
+  }
+  scene.add(tickGroup);
+
+  function mkLabel(text, pos, color='#1a1a1a', size=0.55){
+    const canvas = document.createElement('canvas');
+    const W = 256; canvas.width = W; canvas.height = W;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,W,W);
+    ctx.fillStyle = color;
+    // Use Cormorant italic for Greek-style serif feel; fall back to system serif
+    ctx.font = "italic 110px 'Cormorant Garamond', Georgia, serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, W/2, W/2);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({map: tex, transparent: true});
+    const spr = new THREE.Sprite(mat);
+    spr.scale.set(size, size, size);
+    spr.position.set(...pos);
+    return spr;
+  }
+
+  // Labels
+  scene.add(
+    // t label at the end of t-axis
+    mkLabel('t',  [TAU + 0.4, 0, 0], COL.ink, 0.6),
+    // Eᵧ label at top of 3D-y axis
+    mkLabel('Eᵧ', [0, 1.45, 0], COL.fy, 0.7),
+    // Eₓ label at end of 3D-(-z) axis (into screen)
+    mkLabel('Eₓ', [0, 0, -1.45], COL.fx, 0.7),
+  );
+
+  // ---------- Reference planes ----------
+  // Planes containing each component curve.
+  // Eᵧ-component plane: lies in the (t, Eᵧ) plane (i.e., 3D z = 0). Spans width TAU along t and ~2.4 along 3D-y.
+  // Eₓ-component plane: lies in the (t, Eₓ) plane (i.e., 3D y = 0). Spans width TAU along t and ~2.4 along 3D-z.
+  const planeMatY = new THREE.MeshBasicMaterial({
+    color: hexNum(COL.fy), opacity: 0.10, transparent: true, side: THREE.DoubleSide
+  });
+  const planeMatZ = new THREE.MeshBasicMaterial({
+    color: hexNum(COL.fx), opacity: 0.10, transparent: true, side: THREE.DoubleSide
+  });
+  const planeGeom = new THREE.PlaneGeometry(TAU, 2.4);
+  const planeY = new THREE.Mesh(planeGeom, planeMatY);
+  planeY.position.set(TAU/2, 0, 0);
+  // Default PlaneGeometry lies in the xy-plane. We want this plane in the (t, Eᵧ) plane = (x,y) plane.
+  // It's already there. ✓
+  const planeZ = new THREE.Mesh(planeGeom, planeMatZ);
+  planeZ.position.set(TAU/2, 0, 0);
+  // We want this plane in the (t, Eₓ) plane = (x, z) plane. Rotate 90° around the x-axis.
+  planeZ.rotateX(Math.PI/2);
+  scene.add(planeY, planeZ);
+
+  // ---------- Curves for Ex(t) and Ey(t) ----------
+  const nCurve = 700;
+  const exGeom = new THREE.BufferGeometry();
+  const eyGeom = new THREE.BufferGeometry();
+  const exPositions = new Float32Array(nCurve*3);
+  const eyPositions = new Float32Array(nCurve*3);
+  exGeom.setAttribute('position', new THREE.BufferAttribute(exPositions, 3));
+  eyGeom.setAttribute('position', new THREE.BufferAttribute(eyPositions, 3));
+  const exLine = new THREE.Line(exGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fx)}));
+  const eyLine = new THREE.Line(eyGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fy)}));
+  scene.add(exLine, eyLine);
+
+  // ---------- Time "bars" (vertical line segments showing the field magnitude at each sampled t) ----------
+  const tSamples = 41;
+  const exArGeom = new THREE.BufferGeometry();
+  const eyArGeom = new THREE.BufferGeometry();
+  const exArPos = new Float32Array(tSamples*2*3);
+  const eyArPos = new Float32Array(tSamples*2*3);
+  exArGeom.setAttribute('position', new THREE.BufferAttribute(exArPos, 3));
+  eyArGeom.setAttribute('position', new THREE.BufferAttribute(eyArPos, 3));
+  const exArLines = new THREE.LineSegments(exArGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fx), opacity: 0.55, transparent: true}));
+  const eyArLines = new THREE.LineSegments(eyArGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fy), opacity: 0.55, transparent: true}));
+  scene.add(exArLines, eyArLines);
+
+  // ---------- Probe arrows ----------
+  const probeEx  = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 1, hexNum(COL.fx), 0.06, 0.04);
+  const probeEy  = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0,0,0), 1, hexNum(COL.fy), 0.06, 0.04);
+  const probeTot = new THREE.ArrowHelper(new THREE.Vector3(0, 1, -1).normalize(), new THREE.Vector3(0,0,0), 1, hexNum(COL.total), 0.10, 0.06);
+  scene.add(probeEx, probeEy, probeTot);
+
+  function update3D(){
+    // Continuous curves: Eₓ curve in the (t, Eₓ) plane → y = 0, z = -Ex_value
+    //                   Eᵧ curve in the (t, Eᵧ) plane → y = Ey_value, z = 0
+    for (let i = 0; i < nCurve; i++) {
+      const t = i * (TAU / (nCurve-1));
+      const ex = Ex(t), ey = Ey(t);
+      // Eₓ curve in the y=0 plane, with field along the -z (into screen) axis
+      exPositions[3*i+0] = t;
+      exPositions[3*i+1] = 0;
+      exPositions[3*i+2] = -ex;
+      // Eᵧ curve in the z=0 plane, with field along the +y (up) axis
+      eyPositions[3*i+0] = t;
+      eyPositions[3*i+1] = ey;
+      eyPositions[3*i+2] = 0;
+    }
+    exGeom.attributes.position.needsUpdate = true;
+    eyGeom.attributes.position.needsUpdate = true;
+
+    // Sampled time bars
+    for (let i = 0; i < tSamples; i++) {
+      const t = i * (TAU / (tSamples - 1));
+      const ex = Ex(t), ey = Ey(t);
+      // Eₓ bar: from (t,0,0) to (t,0,-ex)
+      exArPos[6*i+0] = t;  exArPos[6*i+1] = 0;  exArPos[6*i+2] = 0;
+      exArPos[6*i+3] = t;  exArPos[6*i+4] = 0;  exArPos[6*i+5] = -ex;
+      // Eᵧ bar: from (t,0,0) to (t,ey,0)
+      eyArPos[6*i+0] = t;  eyArPos[6*i+1] = 0;  eyArPos[6*i+2] = 0;
+      eyArPos[6*i+3] = t;  eyArPos[6*i+4] = ey; eyArPos[6*i+5] = 0;
+    }
+    exArGeom.attributes.position.needsUpdate = true;
+    eyArGeom.attributes.position.needsUpdate = true;
+
+    // Probe at state.probe
+    const t = state.probe;
+    const ex = Ex(t), ey = Ey(t);
+
+    // Eₓ probe arrow: position at (t,0,0), direction along -z scaled by sign(ex), length |ex|
+    probeEx.position.set(t, 0, 0);
+    probeEx.setDirection(new THREE.Vector3(0, 0, -Math.sign(ex) || -1));
+    probeEx.setLength(Math.abs(ex), 0.06, 0.04);
+
+    // Eᵧ probe arrow: position at (t,0,0), direction along +y scaled by sign(ey), length |ey|
+    probeEy.position.set(t, 0, 0);
+    probeEy.setDirection(new THREE.Vector3(0, Math.sign(ey) || 1, 0));
+    probeEy.setLength(Math.abs(ey), 0.06, 0.04);
+
+    // Total E vector: direction (0, ey, -ex), length sqrt(ex² + ey²)
+    const totV = new THREE.Vector3(0, ey, -ex);
+    const totL = totV.length() || 1;
+    probeTot.position.set(t, 0, 0);
+    probeTot.setDirection(totV.clone().normalize());
+    probeTot.setLength(totL, 0.10, 0.06);
+
+    planeY.visible = planeZ.visible = state.planes;
+
+    // Update axis lengths to match max amplitudes
+    axisEy.geometry.attributes.position.setXYZ(1, 0, 1.2 * Math.max(1, state.Ay), 0);
+    axisEy.geometry.attributes.position.needsUpdate = true;
+    axisEx.geometry.attributes.position.setXYZ(1, 0, 0, -1.2 * Math.max(1, state.Ax));
+    axisEx.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // ============================================================
+  // SVG ellipse plot (Eₓ vs Eᵧ in 2D — unchanged orientation, light theme)
+  // ============================================================
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const grid  = document.createElementNS(svgNS,'g');
+  grid.setAttribute('stroke', COL.grid);
+  grid.setAttribute('stroke-width', '0.005');
+  svg.appendChild(grid);
+
+  const axes2 = document.createElementNS(svgNS,'g');
+  axes2.setAttribute('stroke', COL.ink);
+  axes2.setAttribute('stroke-width', '0.012');
+  axes2.setAttribute('opacity', '0.5');
+  svg.appendChild(axes2);
+
+  const path = document.createElementNS(svgNS,'path');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', COL.ink);
+  path.setAttribute('stroke-width', '0.018');
+  path.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(path);
+
+  // Probe radius bar (no arrowhead) — colored with the total color (green)
+  const tip = document.createElementNS(svgNS,'line');
+  tip.setAttribute('stroke', COL.total);
+  tip.setAttribute('stroke-width', '0.035');
+  tip.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(tip);
+
+  // Probe-tip dot
+  const tipDot = document.createElementNS(svgNS,'circle');
+  tipDot.setAttribute('r', '0.04');
+  tipDot.setAttribute('fill', COL.total);
+  svg.appendChild(tipDot);
+
+  function buildEllipse(){
+    grid.innerHTML = '';
+    axes2.innerHTML = '';
+    const S = 1.1 * Math.max(1, state.Ax, state.Ay);
+
+    for (let i = -Math.floor(S*5); i <= Math.floor(S*5); i++) {
+      const x = i / 5;
+      const lv = document.createElementNS(svgNS,'line');
+      lv.setAttribute('x1', x);  lv.setAttribute('y1', -S);
+      lv.setAttribute('x2', x);  lv.setAttribute('y2',  S);
+      grid.appendChild(lv);
+
+      const lh = document.createElementNS(svgNS,'line');
+      lh.setAttribute('x1', -S); lh.setAttribute('y1', x);
+      lh.setAttribute('x2',  S); lh.setAttribute('y2', x);
+      grid.appendChild(lh);
+    }
+
+    const xAxis = document.createElementNS(svgNS,'line');
+    xAxis.setAttribute('x1', -S); xAxis.setAttribute('y1', 0);
+    xAxis.setAttribute('x2',  S); xAxis.setAttribute('y2', 0);
+    axes2.appendChild(xAxis);
+    const yAxis = document.createElementNS(svgNS,'line');
+    yAxis.setAttribute('x1', 0);  yAxis.setAttribute('y1', -S);
+    yAxis.setAttribute('x2', 0);  yAxis.setAttribute('y2',  S);
+    axes2.appendChild(yAxis);
+
+    // Axis labels
+    const tx = document.createElementNS(svgNS,'text');
+    tx.setAttribute('x', S - 0.06);
+    tx.setAttribute('y', -0.06);
+    tx.setAttribute('fill', COL.fx);
+    tx.setAttribute('font-size', '0.13');
+    tx.setAttribute('font-style', 'italic');
+    tx.setAttribute('font-family', "'Cormorant Garamond', serif");
+    tx.setAttribute('text-anchor', 'end');
+    tx.textContent = 'Eₓ';
+    axes2.appendChild(tx);
+
+    const ty = document.createElementNS(svgNS,'text');
+    ty.setAttribute('x', 0.06);
+    ty.setAttribute('y', -(S - 0.06));
+    ty.setAttribute('fill', COL.fy);
+    ty.setAttribute('font-size', '0.13');
+    ty.setAttribute('font-style', 'italic');
+    ty.setAttribute('font-family', "'Cormorant Garamond', serif");
+    ty.textContent = 'Eᵧ';
+    axes2.appendChild(ty);
+  }
+
+  function updateEllipse(){
+    const N = 400; let d = '';
+    for (let i = 0; i <= N; i++) {
+      const t = i * (TAU / N);
+      const x = Ex(t), y = Ey(t);
+      d += (i ? 'L' : 'M') + x + ',' + (-y) + ' ';
+    }
+    path.setAttribute('d', d.trim());
+
+    const tx = Ex(state.probe), ty = Ey(state.probe);
+    tip.setAttribute('x1', 0);  tip.setAttribute('y1', 0);
+    tip.setAttribute('x2', tx); tip.setAttribute('y2', -ty);
+    tipDot.setAttribute('cx', tx);
+    tipDot.setAttribute('cy', -ty);
+  }
+
+  // ============================================================
+  // Stokes parameters & angles readout
+  // ============================================================
+  function updateReadout(){
+    const Ax = state.Ax, Ay = state.Ay, delta = state.delta;
+    const I = Ax*Ax + Ay*Ay;
+    const Q = Ax*Ax - Ay*Ay;
+    const U = 2 * Ax * Ay * Math.cos(delta);
+    const V = 2 * Ax * Ay * Math.sin(delta);
+
+    const q = Q / I, u = U / I, v = V / I;
+    const p = Math.sqrt(q*q + u*u + v*v);
+
+    const theta = 0.5 * Math.atan2(u, q);
+    const eps   = 0.5 * (p === 0 ? 0 : Math.asin(v / p));
+    const e     = Math.tan(eps);
+    const deg = x => x * 180 / Math.PI;
+
+    sTheta.textContent = deg(theta).toFixed(2);
+    sEps.textContent   = deg(eps).toFixed(2);
+    sEll.textContent   = (Math.abs(e) > 1e-6 ? e.toFixed(3) : '0.000');
+    sP.textContent     = p.toFixed(3);
+
+    if (Math.abs(v) <= 1e-9) sHand.textContent = 'Linear';
+    else sHand.textContent = (v > 0 ? 'Left-handed' : 'Right-handed');
+  }
+
+  function updateAll(){
+    update3D();
+    buildEllipse();
+    updateEllipse();
+    updateReadout();
+    renderer.render(scene, camera);
+  }
+
+  function setOuts(){
+    outs.delta.textContent = state.delta.toFixed(2) + ' rad';
+    outs.t0.textContent    = state.t0.toFixed(2)    + ' rad';
+    outs.Ax.textContent    = (+state.Ax).toFixed(2);
+    outs.Ay.textContent    = (+state.Ay).toFixed(2);
+    outs.probe.textContent = state.probe.toFixed(2);
+  }
+
+  // Slider hookups
+  Object.entries(inputs).forEach(([k, el]) => {
+    el.addEventListener('input', () => {
+      if (k === 'planes') state[k] = el.checked;
+      else state[k] = +el.value;
+      setOuts();
+      updateAll();
+    });
+  });
+
+  // Preset buttons (delta only)
+  document.querySelectorAll('.presetBtn').forEach(b => {
+    b.addEventListener('click', () => {
+      const d = +b.dataset.delta;
+      state.delta = d;
+      inputs.delta.value = d;
+      setOuts();
+      updateAll();
+    });
+  });
+
+  // Resize handler
+  function resize(){
+    const w = elThree.clientWidth;
+    const h = elThree.clientHeight;
+    if (w === 0 || h === 0) return;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+  }
+  window.addEventListener('resize', resize);
+
+  // Animation (advance t0)
+  let raf = null;
+  const btn = document.getElementById('toggleAnim');
+  function loop(){
+    state.t0 = (state.t0 + 0.02) % TAU;
+    inputs.t0.value = state.t0;
+    outs.t0.textContent = state.t0.toFixed(2) + ' rad';
+    updateAll();
+    raf = requestAnimationFrame(loop);
+  }
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.anim = !state.anim;
+    btn.textContent = state.anim ? '❚❚ Pause' : '▶ Play';
+    btn.classList.toggle('active', state.anim);
+    if (state.anim) loop();
+    else { cancelAnimationFrame(raf); raf = null; }
+  });
+
+  // Initial draw
+  inputs.planes.checked = state.planes;
+  setOuts();
+  // Wait one frame so layout settles
+  requestAnimationFrame(() => { resize(); updateAll(); });
+})();
+</script>
+</body>
+</html>

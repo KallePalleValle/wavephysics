@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Polarization States</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Single-Slit Diffraction — Phasor Demonstration</title>
 <style>
   :root {
     --bg: #f4f1ea;
@@ -14,30 +11,23 @@
     --paper: #faf8f3;
     --accent: #b8341f;
     --wave: #2c5f7c;
-    --warm: #d97420;
-    --good: #2f9e44;
+    --resultant: #b8341f;
     --grid: #d8d2c4;
     --muted: #6b6459;
     --rule: #2a2520;
-
-    /* Field colors for this app */
-    --fx: #2c5f7c;        /* Ex — teal blue */
-    --fy: #d97420;        /* Ey — warm orange */
-    --total: #2f9e44;     /* total E (probe) — green */
-    --propagation: #1a1a1a;  /* z direction (propagation) — ink */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100vh;
+    overflow: hidden;
     background-image:
       radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
       radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
   }
-  body { display: flex; flex-direction: column; min-height: 100vh; }
-
+  body { display: flex; flex-direction: column; }
   header {
     border-bottom: 2px solid var(--rule);
     padding: 14px 32px 12px;
@@ -56,7 +46,7 @@
     background: var(--rule);
   }
   h1 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 26px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -64,38 +54,35 @@
   }
   h1 em { font-style: italic; color: var(--accent); }
   .subtitle {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Consolas, "Courier New", monospace;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 2.5px;
     color: var(--muted);
   }
-
   main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    padding: 18px 32px 28px;
-    max-width: 1700px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .top-row {
     display: grid;
-    grid-template-columns: 1fr 460px;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+    padding: 18px 32px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .stage {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1.4fr);
     gap: 18px;
     min-height: 0;
   }
-
   .panel {
     background: var(--paper);
     border: 1px solid var(--rule);
-    padding: 14px 18px 16px;
+    padding: 14px 18px 12px;
     position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
   .panel-label {
     position: absolute;
@@ -103,76 +90,64 @@
     left: 18px;
     background: var(--bg);
     padding: 0 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Consolas, "Courier New", monospace;
     font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--muted);
   }
-
-  #three {
-    width: 100%;
-    height: 480px;
-    display: block;
-    border-radius: 0;
-  }
-  #three canvas { display: block; }
-
-  #ellipse {
-    width: 100%;
-    height: 480px;
-    background: transparent;
-    display: block;
-  }
-
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .panel-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 14px;
     color: var(--muted);
-    margin-top: 10px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
   }
-  .legend-item { display: flex; align-items: center; gap: 6px; }
-  .swatch { width: 14px; height: 3px; flex-shrink: 0; }
-
-  .play-pill {
-    margin-left: auto;
-  }
-
-  /* Controls section */
-  .controls-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px 24px;
-  }
-
-  .control {
+  .panel-title em { font-weight: 600; color: var(--ink); }
+  .svg-wrap {
+    flex: 1;
+    min-height: 0;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+  svg { display: block; width: 100%; height: 100%; max-height: 100%; }
+
+  aside { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .control-group {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 18px;
+  }
+  .control-group h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--grid);
+  }
+  label {
+    display: block;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .value {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
   }
   .slider-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-  }
-  label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-  }
-  .value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: var(--accent);
-    font-weight: 500;
+    margin-bottom: 6px;
   }
   input[type="range"] {
     -webkit-appearance: none;
@@ -180,7 +155,9 @@
     height: 2px;
     background: var(--rule);
     outline: none;
+    margin-bottom: 14px;
   }
+  input[type="range"]:last-child { margin-bottom: 2px; }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -199,644 +176,539 @@
     border: 2px solid var(--paper);
     box-shadow: 0 0 0 1px var(--rule);
   }
-
-  /* Buttons */
-  button {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    padding: 7px 12px;
-    background: var(--paper);
-    color: var(--ink);
-    border: 1px solid var(--rule);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s;
-  }
-  button:hover { background: var(--ink); color: var(--paper); }
-  button.active { background: var(--ink); color: var(--paper); }
-
-  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-  .preset-row button { flex: 1; padding: 6px 8px; }
-
-  .check-row {
+  .legend {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: var(--muted);
-    cursor: pointer;
-  }
-  .check-row input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
-
-  /* Readout cards */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    flex-wrap: wrap;
     gap: 14px;
-  }
-  .stat {
-    border: 1px solid var(--grid);
-    background: var(--bg);
-    padding: 10px 12px;
-    text-align: center;
-  }
-  .stat .k {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Consolas, "Courier New", monospace;
     font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
     color: var(--muted);
-    margin-bottom: 6px;
+    margin-top: 6px;
+    flex-shrink: 0;
   }
-  .stat .v {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 22px;
-    color: var(--ink);
-  }
-  .stat .v.accent { color: var(--accent); }
-
-  .play-btn {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .play-btn:hover { background: var(--accent); color: var(--paper); }
-
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 3px; }
   .signature {
     position: fixed;
     right: 14px;
     bottom: 8px;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-style: italic;
     font-size: 12px;
     color: var(--muted);
     letter-spacing: 0.5px;
     pointer-events: none;
   }
-
-  @media (max-width: 1100px) {
-    .top-row { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: repeat(2, 1fr); }
-  }
 </style>
 </head>
-
 <body>
 
 <header>
-  <h1>Polarization States</h1>
-
+  <h1>Single-Slit Diffraction</h1>
+  
 </header>
 
 <main>
-
-  <div class="top-row">
+  <div class="stage">
 
     <div class="panel">
-      <span class="panel-label">Field Components in Time</span>
+      <span class="panel-label">Wavefronts, Slit, & Intensity Pattern</span>
+      <div class="svg-wrap">
+        <svg id="waveSvg" viewBox="0 0 1100 380" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
       <div class="legend">
-        <div class="legend-item"><div class="swatch" style="background: var(--fx);"></div>Eₓ along x</div>
-        <div class="legend-item"><div class="swatch" style="background: var(--fy);"></div>Eᵧ along y</div>
-        <div class="legend-item"><div class="swatch" style="background: var(--propagation);"></div>z (propagation)</div>
-        <div class="legend-item"><div class="swatch" style="background: var(--total);"></div>Total E (probe)</div>
-        <button id="toggleAnim" class="play-btn play-pill">▶ Play</button>
+        <div class="legend-item"><div class="swatch" style="background: var(--wave);"></div>Incident wavefront</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--accent);"></div>Slit aperture (b)</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--ink);"></div>Diffracted ray (θ)</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--accent); opacity: 0.35;"></div>I(θ)/I₀</div>
       </div>
-      <div id="three"></div>
     </div>
 
     <div class="panel">
-      <span class="panel-label">Polarization State (Eₓ vs Eᵧ)</span>
-      <svg id="ellipse" viewBox="-1.2 -1.2 2.4 2.4" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
-
-  </div>
-
-  <div class="panel">
-    <span class="panel-label">Controls</span>
-
-    <div class="controls-grid">
-
-      <!-- Phase difference δ with preset buttons -->
-      <div class="control">
-        <div class="slider-row">
-          <label>Phase difference δ</label>
-          <span class="value" id="outDelta">0.00 rad</span>
+      <span class="panel-label">From Path Difference to Phasor Sum</span>
+      <div class="svg-wrap">
+        <svg id="phasorSvg" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="swatch" style="background: repeating-linear-gradient(to right, var(--wave) 0 4px, transparent 4px 7px); opacity: 0.75;"></div>
+          Reference wavefront
         </div>
-        <div class="preset-row">
-          <button type="button" class="presetBtn" data-delta="0">0</button>
-          <button type="button" class="presetBtn" data-delta="1.5707963267948966">π/2</button>
-          <button type="button" class="presetBtn" data-delta="3.141592653589793">π</button>
-          <button type="button" class="presetBtn" data-delta="4.71238898038469">3π/2</button>
-        </div>
-        <input id="delta" type="range" min="0" max="6.283185307179586" step="0.001" value="0">
       </div>
-
-      <div class="control">
-        <div class="slider-row"><label>Time offset t₀</label><span class="value" id="outT0">0.00 rad</span></div>
-        <input id="t0" type="range" min="0" max="6.283185307179586" step="0.001" value="0">
-      </div>
-
-      <div class="control">
-        <div class="slider-row"><label>Amplitude Aₓ</label><span class="value" id="outAx">1.00</span></div>
-        <input id="Ax" type="range" min="0" max="2" step="0.01" value="1">
-      </div>
-
-      <div class="control">
-        <div class="slider-row"><label>Amplitude Aᵧ</label><span class="value" id="outAy">1.00</span></div>
-        <input id="Ay" type="range" min="0" max="2" step="0.01" value="1">
-      </div>
-
-      <div class="control">
-        <div class="slider-row"><label>Probe time t</label><span class="value" id="outProbe">3.14</span></div>
-        <input id="probe" type="range" min="0" max="6.283185307179586" step="0.001" value="3.141592653589793">
-      </div>
-
-      <div class="control" style="justify-content: center;">
-        <label class="check-row">
-          <input id="planes" type="checkbox">
-          Show reference planes
-        </label>
-      </div>
-
     </div>
+
   </div>
 
-  <div class="panel">
-    <span class="panel-label">Polarization Readout</span>
-    <div class="stats">
-      <div class="stat"><div class="k">Azimuth θ (deg)</div><div class="v" id="statTheta">0.00</div></div>
-      <div class="stat"><div class="k">Ellipticity ε (deg)</div><div class="v" id="statEps">0.00</div></div>
-      <div class="stat"><div class="k">Ellipticity e = tan ε</div><div class="v" id="statEll">0.00</div></div>
-      <div class="stat"><div class="k">Degree of pol. p</div><div class="v" id="statP">1.00</div></div>
-      <div class="stat"><div class="k">Handedness</div><div class="v accent" id="statHand">Linear</div></div>
-    </div>
-  </div>
+  <aside>
+    <div class="control-group">
+      <h3>Parameters</h3>
 
+      <div class="slider-row">
+        <label>Slit width <span style="text-transform:none; letter-spacing:0;">b / λ</span></label>
+        <span class="value" id="bVal">4.0</span>
+      </div>
+      <input type="range" id="bSlider" min="1" max="12" step="0.1" value="4">
+
+      <div class="slider-row">
+        <label>Phasors <span style="text-transform:none; letter-spacing:0;">N</span></label>
+        <span class="value" id="nVal">5</span>
+      </div>
+      <input type="range" id="nSlider" min="5" max="40" step="1" value="5">
+
+      <div class="slider-row">
+        <label>Angle <span style="text-transform:none; letter-spacing:0;">θ (deg)</span></label>
+        <span class="value" id="angVal">0.0°</span>
+      </div>
+      <input type="range" id="angSlider" min="0" max="15" step="0.1" value="0">
+    </div>
+  </aside>
 </main>
 
 <div class="signature">RM</div>
 
-<!-- Three.js -->
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
-(function(){
-  const TAU = Math.PI*2;
+const state = { b: 4.0, N: 5, theta: 0.0 };
 
-  // Read CSS variables for colors
-  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const COL = {
-    bg:     cssVar('--paper')        || '#faf8f3',
-    ink:    cssVar('--ink')          || '#1a1a1a',
-    muted:  cssVar('--muted')        || '#6b6459',
-    grid:   cssVar('--grid')         || '#d8d2c4',
-    fx:     cssVar('--fx')           || '#2c5f7c',
-    fy:     cssVar('--fy')           || '#d97420',
-    total:  cssVar('--total')        || '#2f9e44',
-    accent: cssVar('--accent')       || '#b8341f',
-  };
-  function hexNum(hex){
-    const h = hex.replace('#','');
-    return parseInt(h.length === 3
-      ? h.split('').map(c=>c+c).join('')
-      : h, 16);
+const bSlider = document.getElementById('bSlider');
+const nSlider = document.getElementById('nSlider');
+const angSlider = document.getElementById('angSlider');
+const bVal = document.getElementById('bVal');
+const nVal = document.getElementById('nVal');
+const angVal = document.getElementById('angVal');
+
+bSlider.addEventListener('input', e => { state.b = parseFloat(e.target.value); render(); });
+nSlider.addEventListener('input', e => { state.N = parseInt(e.target.value); render(); });
+angSlider.addEventListener('input', e => { state.theta = parseFloat(e.target.value); render(); });
+
+function physics() {
+  const thetaRad = state.theta * Math.PI / 180;
+  // Chain model (midpoint rule): N phasors at strip centers y_i = (i+0.5)·b/N, i = 0..N-1.
+  // Spacing between adjacent phasors = b/N. Phase step:
+  //   Δφ = (2π/λ)·(b/N)·sinθ
+  // At first minimum (b·sinθ = 1), Δφ = 2π/N and N phasors form the Nth roots of unity,
+  // summing to exactly 0 — the polygon closes. This is the correct discretization.
+  const dphi = (2 * Math.PI) * (state.b / state.N) * Math.sin(thetaRad);
+  const totPhi = state.N * dphi;
+  let amp;
+  if (Math.abs(dphi) < 1e-10) amp = 1.0;
+  else amp = Math.sin(state.N * dphi / 2) / (state.N * Math.sin(dphi / 2));
+  return { thetaRad, dphi, totPhi, amp, intensity: amp * amp };
+}
+
+// Color palette for the 5 marker phasors / dials / sine rays.
+// t is in [0,1]; we snap to the nearest of 5 colors (blue → green → yellow → orange → red).
+const markerPalette = ['#2563c8', '#2f9e44', '#c9a227', '#d97420', '#c0322b'];
+function phasorColor(t) {
+  const k = Math.round(t * (markerPalette.length - 1));
+  return markerPalette[Math.max(0, Math.min(markerPalette.length - 1, k))];
+}
+
+function render() {
+  bVal.textContent = state.b.toFixed(1);
+  nVal.textContent = state.N;
+  angVal.textContent = state.theta.toFixed(1) + '°';
+  const p = physics();
+  drawWaveAndIntensity(p);
+  drawPhasors(p);
+}
+
+// ============================================================
+// FIG 01 — Wave, slit, intensity pattern
+// ============================================================
+function drawWaveAndIntensity(p) {
+  const W = 1100, H = 380;
+  const slitX = 430;
+  const screenX = 920;
+  const cy = H / 2;
+  const slitPx = Math.min(180, Math.max(24, state.b * 14));
+  const topSlit = cy - slitPx / 2;
+  const botSlit = cy + slitPx / 2;
+
+  const svg = document.getElementById('waveSvg');
+  let s = '';
+
+  s += `<defs>
+    <pattern id="gridp" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="var(--grid)" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink)"/>
+    </marker>
+  </defs>`;
+  s += `<rect width="${W}" height="${H}" fill="url(#gridp)"/>`;
+
+  const lamPx = 38;
+  const nWaves = 4;
+  const firstX = slitX - nWaves * lamPx - 20;
+  for (let i = 0; i < nWaves; i++) {
+    const x = firstX + i * lamPx;
+    const opacity = 0.35 + i * 0.12;
+    s += `<line x1="${x}" y1="30" x2="${x}" y2="${H - 30}" stroke="var(--wave)" stroke-width="2" opacity="${opacity}"/>`;
+  }
+  for (let y of [70, 190, 310]) {
+    s += `<line x1="${firstX - 40}" y1="${y}" x2="${firstX - 10}" y2="${y}" stroke="var(--ink)" stroke-width="1.2" marker-end="url(#arr)"/>`;
+  }
+  s += `<line x1="${firstX}" y1="20" x2="${firstX + lamPx}" y2="20" stroke="var(--muted)" stroke-width="1"/>`;
+  s += `<line x1="${firstX}" y1="16" x2="${firstX}" y2="24" stroke="var(--muted)" stroke-width="1"/>`;
+  s += `<line x1="${firstX + lamPx}" y1="16" x2="${firstX + lamPx}" y2="24" stroke="var(--muted)" stroke-width="1"/>`;
+  s += `<text x="${firstX + lamPx/2}" y="14" font-family="Cormorant Garamond" font-style="italic" font-size="14" fill="var(--muted)" text-anchor="middle">λ</text>`;
+
+  s += `<rect x="${slitX - 6}" y="30" width="12" height="${topSlit - 30}" fill="var(--ink)"/>`;
+  s += `<rect x="${slitX - 6}" y="${botSlit}" width="12" height="${H - 30 - botSlit}" fill="var(--ink)"/>`;
+  for (let y = 34; y < topSlit - 4; y += 9) {
+    s += `<line x1="${slitX - 14}" y1="${y + 7}" x2="${slitX - 6}" y2="${y}" stroke="var(--ink)" stroke-width="0.8"/>`;
+  }
+  for (let y = botSlit + 4; y < H - 30; y += 9) {
+    s += `<line x1="${slitX - 14}" y1="${y + 7}" x2="${slitX - 6}" y2="${y}" stroke="var(--ink)" stroke-width="0.8"/>`;
   }
 
-  // DOM
-  const elThree = document.getElementById('three');
-  const svg = document.getElementById('ellipse');
+  s += `<line x1="${slitX - 30}" y1="${topSlit}" x2="${slitX - 30}" y2="${botSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
+  s += `<line x1="${slitX - 34}" y1="${topSlit}" x2="${slitX - 26}" y2="${topSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
+  s += `<line x1="${slitX - 34}" y1="${botSlit}" x2="${slitX - 26}" y2="${botSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
+  s += `<text x="${slitX - 40}" y="${cy + 5}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--accent)" text-anchor="end">b = ${state.b.toFixed(1)}λ</text>`;
 
-  const sTheta = document.getElementById('statTheta');
-  const sEps   = document.getElementById('statEps');
-  const sEll   = document.getElementById('statEll');
-  const sP     = document.getElementById('statP');
-  const sHand  = document.getElementById('statHand');
-
-  const inputs = {
-    delta: document.getElementById('delta'),
-    t0:    document.getElementById('t0'),
-    Ax:    document.getElementById('Ax'),
-    Ay:    document.getElementById('Ay'),
-    probe: document.getElementById('probe'),
-    planes:document.getElementById('planes'),
-  };
-  const outs = {
-    delta: document.getElementById('outDelta'),
-    t0:    document.getElementById('outT0'),
-    Ax:    document.getElementById('outAx'),
-    Ay:    document.getElementById('outAy'),
-    probe: document.getElementById('outProbe'),
-  };
-
-  let state = {
-    delta: 0, t0: 0, Ax: 1, Ay: 1, probe: Math.PI,
-    planes: false, anim: false
-  };
-
-  // ============================================================
-  // 3D scene
-  // ============================================================
-  // Axis convention (NEW per user request):
-  //   3D x  → time t (going right, length TAU)
-  //   3D y  → Eᵧ field axis (going UP)            ← was Eₓ before
-  //   3D z  → Eₓ field axis, but pointing into screen (we plot at 3D-z = -Eₓ)
-  //
-  // Functions Ex(t), Ey(t) compute the physical field values; we map them to 3D coordinates as:
-  //   point3D = (t,  Ey_value,  -Ex_value)
-  // This swaps the labels relative to the original layout (where y was Eₓ and z was Eᵧ).
-  function Ex(t){ return state.Ax * Math.cos(t - state.t0); }
-  function Ey(t){ return state.Ay * Math.cos(t - state.t0 + state.delta); }
-
-  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-  renderer.setSize(elThree.clientWidth, elThree.clientHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.setClearColor(hexNum(COL.bg), 1);
-  elThree.appendChild(renderer.domElement);
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(hexNum(COL.bg));
-
-  const camera = new THREE.PerspectiveCamera(40, elThree.clientWidth/elThree.clientHeight, 0.1, 100);
-  camera.position.set(6.5, 4.0, 5.2);
-  camera.lookAt(3.14, 0, 0);
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.95));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.4);
-  dir.position.set(5,6,7);
-  scene.add(dir);
-
-  // ---------- Axes ----------
-  function mkAxis(from, to, color, width=1){
-    const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...from), new THREE.Vector3(...to)]);
-    const mat = new THREE.LineBasicMaterial({color, linewidth: width});
-    return new THREE.Line(geom, mat);
-  }
-  // t-axis (right): goes from origin to (TAU, 0, 0) — drawn in ink
-  const axisT = mkAxis([0,0,0],[TAU,0,0], hexNum(COL.ink));
-  // Eᵧ axis: 3D y-axis (UP). Eᵧ takes positive 3D y values. Originally was Eₓ. Color: --fy (orange).
-  const axisEy = mkAxis([0,0,0],[0,1.2,0], hexNum(COL.fy));
-  // Eₓ axis: 3D z-axis but in NEGATIVE z direction (into screen) — drawn from origin to (0,0,-1.2). Color: --fx (blue).
-  const axisEx = mkAxis([0,0,0],[0,0,-1.2], hexNum(COL.fx));
-  scene.add(axisT, axisEy, axisEx);
-
-  // Tick marks at integer multiples of π/2 along the t-axis (cosmetic)
-  const tickGroup = new THREE.Group();
-  for (let k = 0; k <= 4; k++) {
-    const tk = (k * TAU) / 4;
-    const tg = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(tk, -0.04, 0), new THREE.Vector3(tk, 0.04, 0)
-    ]);
-    tickGroup.add(new THREE.Line(tg, new THREE.LineBasicMaterial({color: hexNum(COL.muted)})));
-  }
-  scene.add(tickGroup);
-
-  function mkLabel(text, pos, color='#1a1a1a', size=0.55){
-    const canvas = document.createElement('canvas');
-    const W = 256; canvas.width = W; canvas.height = W;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,W,W);
-    ctx.fillStyle = color;
-    // Use Cormorant italic for Greek-style serif feel; fall back to system serif
-    ctx.font = "italic 110px 'Cormorant Garamond', Georgia, serif";
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(text, W/2, W/2);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.minFilter = THREE.LinearFilter;
-    const mat = new THREE.SpriteMaterial({map: tex, transparent: true});
-    const spr = new THREE.Sprite(mat);
-    spr.scale.set(size, size, size);
-    spr.position.set(...pos);
-    return spr;
-  }
-
-  // Labels
-  scene.add(
-    // t label at the end of t-axis
-    mkLabel('t',  [TAU + 0.4, 0, 0], COL.ink, 0.6),
-    // Eᵧ label at top of 3D-y axis
-    mkLabel('Eᵧ', [0, 1.45, 0], COL.fy, 0.7),
-    // Eₓ label at end of 3D-(-z) axis (into screen)
-    mkLabel('Eₓ', [0, 0, -1.45], COL.fx, 0.7),
-  );
-
-  // ---------- Reference planes ----------
-  // Planes containing each component curve.
-  // Eᵧ-component plane: lies in the (t, Eᵧ) plane (i.e., 3D z = 0). Spans width TAU along t and ~2.4 along 3D-y.
-  // Eₓ-component plane: lies in the (t, Eₓ) plane (i.e., 3D y = 0). Spans width TAU along t and ~2.4 along 3D-z.
-  const planeMatY = new THREE.MeshBasicMaterial({
-    color: hexNum(COL.fy), opacity: 0.10, transparent: true, side: THREE.DoubleSide
-  });
-  const planeMatZ = new THREE.MeshBasicMaterial({
-    color: hexNum(COL.fx), opacity: 0.10, transparent: true, side: THREE.DoubleSide
-  });
-  const planeGeom = new THREE.PlaneGeometry(TAU, 2.4);
-  const planeY = new THREE.Mesh(planeGeom, planeMatY);
-  planeY.position.set(TAU/2, 0, 0);
-  // Default PlaneGeometry lies in the xy-plane. We want this plane in the (t, Eᵧ) plane = (x,y) plane.
-  // It's already there. ✓
-  const planeZ = new THREE.Mesh(planeGeom, planeMatZ);
-  planeZ.position.set(TAU/2, 0, 0);
-  // We want this plane in the (t, Eₓ) plane = (x, z) plane. Rotate 90° around the x-axis.
-  planeZ.rotateX(Math.PI/2);
-  scene.add(planeY, planeZ);
-
-  // ---------- Curves for Ex(t) and Ey(t) ----------
-  const nCurve = 700;
-  const exGeom = new THREE.BufferGeometry();
-  const eyGeom = new THREE.BufferGeometry();
-  const exPositions = new Float32Array(nCurve*3);
-  const eyPositions = new Float32Array(nCurve*3);
-  exGeom.setAttribute('position', new THREE.BufferAttribute(exPositions, 3));
-  eyGeom.setAttribute('position', new THREE.BufferAttribute(eyPositions, 3));
-  const exLine = new THREE.Line(exGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fx)}));
-  const eyLine = new THREE.Line(eyGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fy)}));
-  scene.add(exLine, eyLine);
-
-  // ---------- Time "bars" (vertical line segments showing the field magnitude at each sampled t) ----------
-  const tSamples = 41;
-  const exArGeom = new THREE.BufferGeometry();
-  const eyArGeom = new THREE.BufferGeometry();
-  const exArPos = new Float32Array(tSamples*2*3);
-  const eyArPos = new Float32Array(tSamples*2*3);
-  exArGeom.setAttribute('position', new THREE.BufferAttribute(exArPos, 3));
-  eyArGeom.setAttribute('position', new THREE.BufferAttribute(eyArPos, 3));
-  const exArLines = new THREE.LineSegments(exArGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fx), opacity: 0.55, transparent: true}));
-  const eyArLines = new THREE.LineSegments(eyArGeom, new THREE.LineBasicMaterial({color: hexNum(COL.fy), opacity: 0.55, transparent: true}));
-  scene.add(exArLines, eyArLines);
-
-  // ---------- Probe arrows ----------
-  const probeEx  = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 1, hexNum(COL.fx), 0.06, 0.04);
-  const probeEy  = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0,0,0), 1, hexNum(COL.fy), 0.06, 0.04);
-  const probeTot = new THREE.ArrowHelper(new THREE.Vector3(0, 1, -1).normalize(), new THREE.Vector3(0,0,0), 1, hexNum(COL.total), 0.10, 0.06);
-  scene.add(probeEx, probeEy, probeTot);
-
-  function update3D(){
-    // Continuous curves: Eₓ curve in the (t, Eₓ) plane → y = 0, z = -Ex_value
-    //                   Eᵧ curve in the (t, Eᵧ) plane → y = Ey_value, z = 0
-    for (let i = 0; i < nCurve; i++) {
-      const t = i * (TAU / (nCurve-1));
-      const ex = Ex(t), ey = Ey(t);
-      // Eₓ curve in the y=0 plane, with field along the -z (into screen) axis
-      exPositions[3*i+0] = t;
-      exPositions[3*i+1] = 0;
-      exPositions[3*i+2] = -ex;
-      // Eᵧ curve in the z=0 plane, with field along the +y (up) axis
-      eyPositions[3*i+0] = t;
-      eyPositions[3*i+1] = ey;
-      eyPositions[3*i+2] = 0;
+  const nVis = Math.min(state.N, 40);
+  for (let i = 0; i < nVis; i++) {
+    const y = topSlit + (i + 0.5) * (slitPx / nVis);
+    // Forward-facing half circles (Huygens secondary wavelets): from (slitX, y-r) round
+    // the +x side to (slitX, y+r). This is physically cleaner — a single semicircle per radius.
+    for (let r of [16, 32, 48]) {
+      s += `<path d="M ${slitX} ${y - r} A ${r} ${r} 0 0 1 ${slitX} ${y + r}" fill="none" stroke="var(--wave)" stroke-width="0.7" opacity="0.3"/>`;
     }
-    exGeom.attributes.position.needsUpdate = true;
-    eyGeom.attributes.position.needsUpdate = true;
+    s += `<circle cx="${slitX}" cy="${y}" r="1.8" fill="var(--accent)"/>`;
+  }
 
-    // Sampled time bars
-    for (let i = 0; i < tSamples; i++) {
-      const t = i * (TAU / (tSamples - 1));
-      const ex = Ex(t), ey = Ey(t);
-      // Eₓ bar: from (t,0,0) to (t,0,-ex)
-      exArPos[6*i+0] = t;  exArPos[6*i+1] = 0;  exArPos[6*i+2] = 0;
-      exArPos[6*i+3] = t;  exArPos[6*i+4] = 0;  exArPos[6*i+5] = -ex;
-      // Eᵧ bar: from (t,0,0) to (t,ey,0)
-      eyArPos[6*i+0] = t;  eyArPos[6*i+1] = 0;  eyArPos[6*i+2] = 0;
-      eyArPos[6*i+3] = t;  eyArPos[6*i+4] = ey; eyArPos[6*i+5] = 0;
+  const D = screenX - slitX;
+  const maxLobeWidth = 120;
+  s += `<line x1="${screenX}" y1="40" x2="${screenX}" y2="${H - 40}" stroke="var(--ink)" stroke-width="2"/>`;
+  s += `<text x="${screenX}" y="32" font-family="JetBrains Mono" font-size="9" fill="var(--muted)" letter-spacing="1.5" text-anchor="middle">SCREEN</text>`;
+
+  const intensityPoints = [];
+  const steps = 200;
+  for (let i = 0; i <= steps; i++) {
+    const y = 40 + (H - 80) * (i / steps);
+    const dy = y - cy;
+    const thetaRad = Math.atan2(dy, D);
+    // Ideal Fraunhofer single-slit intensity (continuous limit, independent of N):
+    //   I(θ)/I₀ = [sin(β)/β]²  with β = π·(b/λ)·sinθ
+    const beta = Math.PI * state.b * Math.sin(thetaRad);
+    let amp;
+    if (Math.abs(beta) < 1e-10) amp = 1;
+    else amp = Math.sin(beta) / beta;
+    intensityPoints.push({ y, I: amp * amp });
+  }
+
+  let fillPath = `M ${screenX} ${intensityPoints[0].y} `;
+  for (const pt of intensityPoints) {
+    fillPath += `L ${screenX - pt.I * maxLobeWidth} ${pt.y} `;
+  }
+  fillPath += `L ${screenX} ${intensityPoints[intensityPoints.length - 1].y} Z`;
+  s += `<path d="${fillPath}" fill="var(--accent)" opacity="0.18"/>`;
+
+  let curvePath = '';
+  for (let i = 0; i < intensityPoints.length; i++) {
+    const pt = intensityPoints[i];
+    curvePath += (i === 0 ? 'M' : 'L') + (screenX - pt.I * maxLobeWidth).toFixed(1) + ' ' + pt.y.toFixed(1) + ' ';
+  }
+  s += `<path d="${curvePath}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+
+  s += `<line x1="${screenX - maxLobeWidth}" y1="${H - 28}" x2="${screenX}" y2="${H - 28}" stroke="var(--muted)" stroke-width="0.8"/>`;
+  s += `<line x1="${screenX - maxLobeWidth}" y1="${H - 32}" x2="${screenX - maxLobeWidth}" y2="${H - 24}" stroke="var(--muted)" stroke-width="0.8"/>`;
+  s += `<line x1="${screenX}" y1="${H - 32}" x2="${screenX}" y2="${H - 24}" stroke="var(--muted)" stroke-width="0.8"/>`;
+  s += `<text x="${screenX - maxLobeWidth - 4}" y="${H - 22}" font-family="JetBrains Mono" font-size="9" fill="var(--muted)" text-anchor="end">I/I₀ = 1</text>`;
+  s += `<text x="${screenX + 4}" y="${H - 22}" font-family="JetBrains Mono" font-size="9" fill="var(--muted)">0</text>`;
+
+  const thRad = state.theta * Math.PI / 180;
+  // Visual convention: positive θ displayed going UP on screen (screen y is down, so negate).
+  const thRadVis = -thRad;
+  const rayEndY = cy + D * Math.tan(thRadVis);
+  s += `<line x1="${slitX}" y1="${cy}" x2="${screenX}" y2="${rayEndY}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arr)"/>`;
+  s += `<line x1="${slitX}" y1="${cy}" x2="${screenX}" y2="${cy}" stroke="var(--muted)" stroke-width="0.8" stroke-dasharray="2 3"/>`;
+
+  if (Math.abs(state.theta) > 0.5) {
+    const ar = 60;
+    const sweep = thRadVis > 0 ? 1 : 0;
+    const ex = slitX + ar * Math.cos(thRadVis);
+    const ey = cy + ar * Math.sin(thRadVis);
+    s += `<path d="M ${slitX + ar} ${cy} A ${ar} ${ar} 0 0 ${sweep} ${ex} ${ey}" fill="none" stroke="var(--accent)" stroke-width="1.2"/>`;
+    const tx = slitX + (ar + 22) * Math.cos(thRadVis / 2);
+    const ty = cy + (ar + 22) * Math.sin(thRadVis / 2);
+    s += `<text x="${tx}" y="${ty + 5}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--accent)" text-anchor="middle">θ</text>`;
+  }
+
+  // Current intensity dot: use ideal sinc² (same formula as the displayed curve, symmetric in θ)
+  const betaCur = Math.PI * state.b * Math.sin(thRad);
+  const ampCur = (Math.abs(betaCur) < 1e-10) ? 1 : Math.sin(betaCur) / betaCur;
+  const curI = ampCur * ampCur;
+  const curY = cy + D * Math.tan(thRadVis);
+  if (curY >= 40 && curY <= H - 40) {
+    s += `<line x1="${screenX - curI * maxLobeWidth}" y1="${curY}" x2="${screenX}" y2="${curY}" stroke="var(--ink)" stroke-width="1" opacity="0.5"/>`;
+    s += `<circle cx="${screenX - curI * maxLobeWidth}" cy="${curY}" r="5" fill="var(--ink)"/>`;
+    s += `<circle cx="${screenX - curI * maxLobeWidth}" cy="${curY}" r="2.5" fill="var(--paper)"/>`;
+    // Readout placed to the RIGHT of the screen, near the dashed-ray arrowhead that lands there.
+    s += `<text x="${screenX + 10}" y="${curY + 4}" font-family="JetBrains Mono" font-size="11" fill="var(--ink)" font-weight="500">I/I₀ = ${curI.toFixed(3)}</text>`;
+  }
+
+  s += `<text x="${firstX}" y="${H - 10}" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" letter-spacing="1.5">INCIDENT PLANE WAVE →</text>`;
+  s += `<text x="${slitX + 40}" y="${H - 10}" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" letter-spacing="1.5">FAR FIELD</text>`;
+
+  svg.innerHTML = s;
+}
+
+// ============================================================
+// FIG 02 — Magnified slit (with dials) + phasor sum
+// ============================================================
+function drawPhasors(p) {
+  const W = 1100, H = 520;
+  const svg = document.getElementById('phasorSvg');
+  let s = '';
+
+  // ---------- Layout ----------
+  // LEFT part (x: 0..540): dials at x=60, slit at x=220, rays extend to ~x=520
+  // RIGHT part (x: 580..1100): phasor chain with START at x=620
+  const dialCx = 60;
+  const dialR = 26;
+  const slitCx = 220;
+  const slitTopY = 90;
+  const slitBotY = 420;
+  const slitMagHeight = slitBotY - slitTopY;
+
+  // Number of dials (fixed pedagogical count)
+  const M = 5;
+
+  // ---------- Picking which chain-phasors are "marker" phasors ----------
+  // Dials sit at fractional slit positions (k+0.5)/M for k=0..M-1 (strip centers of an M-division).
+  // Chain phasors sit at fractional positions (j+0.5)/N for j=0..N-1.
+  // The chain index closest to dial k is the j minimizing |(j+0.5)/N − (k+0.5)/M|,
+  // which gives j = round((k+0.5)·N/M − 0.5).
+  const markerIdx = [];
+  for (let k = 0; k < M; k++) {
+    markerIdx.push(Math.max(0, Math.min(state.N - 1,
+      Math.round((k + 0.5) * state.N / M - 0.5))));
+  }
+  // Helper: which dial color does chain-index i get?
+  const colorForChainIdx = new Map();
+  for (let k = 0; k < M; k++) colorForChainIdx.set(markerIdx[k], k);
+
+  // ========== LEFT: Magnified slit + sources + dials + rays ==========
+  // Barrier (slit opening vertical with hatching top/bottom)
+  s += `<line x1="${slitCx - 4}" y1="${slitTopY - 30}" x2="${slitCx - 4}" y2="${slitTopY}" stroke="var(--ink)" stroke-width="8"/>`;
+  s += `<line x1="${slitCx - 4}" y1="${slitBotY}" x2="${slitCx - 4}" y2="${slitBotY + 30}" stroke="var(--ink)" stroke-width="8"/>`;
+  for (let y = slitTopY - 28; y < slitTopY - 2; y += 7) {
+    s += `<line x1="${slitCx - 14}" y1="${y + 6}" x2="${slitCx - 4}" y2="${y}" stroke="var(--ink)" stroke-width="0.8"/>`;
+  }
+  for (let y = slitBotY + 2; y < slitBotY + 28; y += 7) {
+    s += `<line x1="${slitCx - 14}" y1="${y + 6}" x2="${slitCx - 4}" y2="${y}" stroke="var(--ink)" stroke-width="0.8"/>`;
+  }
+
+  // Ray geometry
+  const rayLen = 280;
+  const thRad = p.thetaRad;
+  // Visual convention: rays swivel UPWARD for positive θ (screen y is down, so negate).
+  // All ray/wavefront drawing uses thRadVis; the actual physical phase (via p.amp) is unchanged.
+  const thRadVis = -thRad;
+
+  // With rays going up-right (for positive θ), the wavefront is anchored at the TOP dial
+  // (center of the 1st of M strips) and extends toward where the lower dials' rays will cross it.
+  // That direction is perpendicular to the rays and points "down-right" on screen:
+  //   perpDir = (-sin(θv), cos(θv))   (rotated 90° CW from ray direction)
+  // For θv<0 (rays up-right), this gives (+,+) — toward the lower-right, matching the pattern
+  // of where lower sources' rays cross the wavefront plane.
+  const topDialFrac = 0.5 / M;
+  const wfAnchorX = slitCx;
+  const wfAnchorY = slitTopY + topDialFrac * slitMagHeight;
+  const perpDx = -Math.sin(thRadVis);
+  const perpDy = Math.cos(thRadVis);
+
+  // Reference wavefront — extends from the top dial toward the lower-ray-crossing region.
+  const wfLen = (1 - 2 * topDialFrac) * slitMagHeight + 20;
+  const wfX2 = wfAnchorX + perpDx * wfLen;
+  const wfY2 = wfAnchorY + perpDy * wfLen;
+  s += `<line x1="${wfAnchorX.toFixed(1)}" y1="${wfAnchorY.toFixed(1)}" x2="${wfX2.toFixed(1)}" y2="${wfY2.toFixed(1)}" stroke="var(--wave)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75"/>`;
+
+  // Visual wavelength: b wavelengths across the slit
+  const lamVis = slitMagHeight / state.b;
+  const waveAmpPx = 6;
+  const waveSteps = 120;
+
+  // ---------- Draw N sine-line sources across the slit ----------
+  // Cap how many we actually draw so it doesn't get visually overwhelming
+  const nSineDraw = Math.min(state.N, 40);
+  const drawnIndices = [];
+  if (nSineDraw === state.N) {
+    for (let j = 0; j < state.N; j++) drawnIndices.push(j);
+  } else {
+    // Evenly sample nSineDraw indices from [0, N-1], and ALWAYS include the marker indices
+    // so the 5 colored rays are always visible
+    const set = new Set(markerIdx);
+    for (let k = 0; k < nSineDraw; k++) {
+      set.add(Math.round(k * (state.N - 1) / (nSineDraw - 1)));
     }
-    exArGeom.attributes.position.needsUpdate = true;
-    eyArGeom.attributes.position.needsUpdate = true;
-
-    // Probe at state.probe
-    const t = state.probe;
-    const ex = Ex(t), ey = Ey(t);
-
-    // Eₓ probe arrow: position at (t,0,0), direction along -z scaled by sign(ex), length |ex|
-    probeEx.position.set(t, 0, 0);
-    probeEx.setDirection(new THREE.Vector3(0, 0, -Math.sign(ex) || -1));
-    probeEx.setLength(Math.abs(ex), 0.06, 0.04);
-
-    // Eᵧ probe arrow: position at (t,0,0), direction along +y scaled by sign(ey), length |ey|
-    probeEy.position.set(t, 0, 0);
-    probeEy.setDirection(new THREE.Vector3(0, Math.sign(ey) || 1, 0));
-    probeEy.setLength(Math.abs(ey), 0.06, 0.04);
-
-    // Total E vector: direction (0, ey, -ex), length sqrt(ex² + ey²)
-    const totV = new THREE.Vector3(0, ey, -ex);
-    const totL = totV.length() || 1;
-    probeTot.position.set(t, 0, 0);
-    probeTot.setDirection(totV.clone().normalize());
-    probeTot.setLength(totL, 0.10, 0.06);
-
-    planeY.visible = planeZ.visible = state.planes;
-
-    // Update axis lengths to match max amplitudes
-    axisEy.geometry.attributes.position.setXYZ(1, 0, 1.2 * Math.max(1, state.Ay), 0);
-    axisEy.geometry.attributes.position.needsUpdate = true;
-    axisEx.geometry.attributes.position.setXYZ(1, 0, 0, -1.2 * Math.max(1, state.Ax));
-    axisEx.geometry.attributes.position.needsUpdate = true;
+    const arr = [...set];
+    arr.sort((a, b) => a - b);
+    for (const v of arr) drawnIndices.push(v);
   }
 
-  // ============================================================
-  // SVG ellipse plot (Eₓ vs Eᵧ in 2D — unchanged orientation, light theme)
-  // ============================================================
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const grid  = document.createElementNS(svgNS,'g');
-  grid.setAttribute('stroke', COL.grid);
-  grid.setAttribute('stroke-width', '0.005');
-  svg.appendChild(grid);
+  // Slit source dots + sine lines (each ray represents the CENTER of strip j, N strips total)
+  for (const j of drawnIndices) {
+    const frac = (j + 0.5) / state.N;
+    const srcY = slitTopY + frac * slitMagHeight;
+    const isMarker = colorForChainIdx.has(j);
+    const markerK = colorForChainIdx.get(j);
+    const col = isMarker ? phasorColor(markerK / (M - 1)) : '#8a857a';
+    const op = isMarker ? 0.9 : 0.45;
+    const sw = 1.2;  // same width for all
 
-  const axes2 = document.createElementNS(svgNS,'g');
-  axes2.setAttribute('stroke', COL.ink);
-  axes2.setAttribute('stroke-width', '0.012');
-  axes2.setAttribute('opacity', '0.5');
-  svg.appendChild(axes2);
-
-  const path = document.createElementNS(svgNS,'path');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', COL.ink);
-  path.setAttribute('stroke-width', '0.018');
-  path.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(path);
-
-  // Probe radius bar (no arrowhead) — colored with the total color (green)
-  const tip = document.createElementNS(svgNS,'line');
-  tip.setAttribute('stroke', COL.total);
-  tip.setAttribute('stroke-width', '0.035');
-  tip.setAttribute('stroke-linecap', 'round');
-  svg.appendChild(tip);
-
-  // Probe-tip dot
-  const tipDot = document.createElementNS(svgNS,'circle');
-  tipDot.setAttribute('r', '0.04');
-  tipDot.setAttribute('fill', COL.total);
-  svg.appendChild(tipDot);
-
-  function buildEllipse(){
-    grid.innerHTML = '';
-    axes2.innerHTML = '';
-    const S = 1.1 * Math.max(1, state.Ax, state.Ay);
-
-    for (let i = -Math.floor(S*5); i <= Math.floor(S*5); i++) {
-      const x = i / 5;
-      const lv = document.createElementNS(svgNS,'line');
-      lv.setAttribute('x1', x);  lv.setAttribute('y1', -S);
-      lv.setAttribute('x2', x);  lv.setAttribute('y2',  S);
-      grid.appendChild(lv);
-
-      const lh = document.createElementNS(svgNS,'line');
-      lh.setAttribute('x1', -S); lh.setAttribute('y1', x);
-      lh.setAttribute('x2',  S); lh.setAttribute('y2', x);
-      grid.appendChild(lh);
+    // Sine wave path: phase 0 at source, phase = -2π·t/λ_vis along ray
+    let path = '';
+    for (let k = 0; k <= waveSteps; k++) {
+      const tt = (k / waveSteps) * rayLen;
+      const phase = -(2 * Math.PI) * tt / lamVis;
+      const off = waveAmpPx * Math.sin(phase);
+      const px = slitCx + tt * Math.cos(thRadVis) + off * perpDx;
+      const py = srcY + tt * Math.sin(thRadVis) + off * perpDy;
+      path += (k === 0 ? 'M' : 'L') + px.toFixed(2) + ' ' + py.toFixed(2) + ' ';
     }
+    s += `<path d="${path}" fill="none" stroke="${col}" stroke-width="${sw}" opacity="${op}"/>`;
 
-    const xAxis = document.createElementNS(svgNS,'line');
-    xAxis.setAttribute('x1', -S); xAxis.setAttribute('y1', 0);
-    xAxis.setAttribute('x2',  S); xAxis.setAttribute('y2', 0);
-    axes2.appendChild(xAxis);
-    const yAxis = document.createElementNS(svgNS,'line');
-    yAxis.setAttribute('x1', 0);  yAxis.setAttribute('y1', -S);
-    yAxis.setAttribute('x2', 0);  yAxis.setAttribute('y2',  S);
-    axes2.appendChild(yAxis);
-
-    // Axis labels
-    const tx = document.createElementNS(svgNS,'text');
-    tx.setAttribute('x', S - 0.06);
-    tx.setAttribute('y', -0.06);
-    tx.setAttribute('fill', COL.fx);
-    tx.setAttribute('font-size', '0.13');
-    tx.setAttribute('font-style', 'italic');
-    tx.setAttribute('font-family', "'Cormorant Garamond', serif");
-    tx.setAttribute('text-anchor', 'end');
-    tx.textContent = 'Eₓ';
-    axes2.appendChild(tx);
-
-    const ty = document.createElementNS(svgNS,'text');
-    ty.setAttribute('x', 0.06);
-    ty.setAttribute('y', -(S - 0.06));
-    ty.setAttribute('fill', COL.fy);
-    ty.setAttribute('font-size', '0.13');
-    ty.setAttribute('font-style', 'italic');
-    ty.setAttribute('font-family', "'Cormorant Garamond', serif");
-    ty.textContent = 'Eᵧ';
-    axes2.appendChild(ty);
+    // Source dot
+    const dotR = isMarker ? 4 : 2;
+    s += `<circle cx="${slitCx}" cy="${srcY}" r="${dotR}" fill="${col}" stroke="var(--paper)" stroke-width="${isMarker ? 1.5 : 0.5}"/>`;
   }
 
-  function updateEllipse(){
-    const N = 400; let d = '';
-    for (let i = 0; i <= N; i++) {
-      const t = i * (TAU / N);
-      const x = Ex(t), y = Ey(t);
-      d += (i ? 'L' : 'M') + x + ',' + (-y) + ' ';
+  // ---------- Dials (M of them, fixed) ----------
+  // Each dial represents the CENTER of strip k (of M strips). Phase is measured relative
+  // to the top dial (where the reference wavefront is anchored), so dial 0 reads 0°.
+  for (let k = 0; k < M; k++) {
+    const frac = (k + 0.5) / M;
+    const dialCy = slitTopY + frac * slitMagHeight;
+    const col = phasorColor(k / (M - 1));
+    // Phase relative to top dial: source offset below top dial × sinθ, in λ units.
+    // (frac − topDialFrac)·slitMagHeight is the pixel offset; dividing by lamVis = slitMagHeight/b
+    // gives the offset in λ units. So:
+    //   φ = 2π · (frac − topDialFrac) · b · sinθ
+    const phi = 2 * Math.PI * (frac - topDialFrac) * state.b * Math.sin(thRad);
+
+    // Dial circle
+    s += `<circle cx="${dialCx}" cy="${dialCy}" r="${dialR}" fill="var(--paper)" stroke="var(--rule)" stroke-width="1"/>`;
+    s += `<line x1="${dialCx - dialR}" y1="${dialCy}" x2="${dialCx + dialR}" y2="${dialCy}" stroke="var(--grid)" stroke-width="0.7"/>`;
+    s += `<line x1="${dialCx}" y1="${dialCy - dialR}" x2="${dialCx}" y2="${dialCy + dialR}" stroke="var(--grid)" stroke-width="0.7"/>`;
+    // Arrow — rotation direction: positive phi rotates CCW on screen (y-down → negate sin)
+    const endX = dialCx + (dialR - 4) * Math.cos(phi);
+    const endY = dialCy - (dialR - 4) * Math.sin(phi);
+    s += `<line x1="${dialCx}" y1="${dialCy}" x2="${endX.toFixed(2)}" y2="${endY.toFixed(2)}" stroke="${col}" stroke-width="2.4" stroke-linecap="round"/>`;
+    s += `<circle cx="${endX.toFixed(2)}" cy="${endY.toFixed(2)}" r="2.6" fill="${col}"/>`;
+    // Phase readout under dial
+    const phaseDeg = ((phi * 180 / Math.PI) % 360 + 360) % 360;
+    s += `<text x="${dialCx}" y="${dialCy + dialR + 13}" font-family="JetBrains Mono" font-size="9" fill="var(--muted)" text-anchor="middle">${phaseDeg.toFixed(0)}°</text>`;
+  }
+
+  // Section labels at top of panel
+  s += `<text x="${dialCx}" y="${slitTopY - 45}" font-family="JetBrains Mono" font-size="9" fill="var(--muted)" letter-spacing="1.5" text-anchor="middle">PHASOR DIALS</text>`;
+  s += `<text x="${slitCx + 90}" y="${slitTopY - 45}" font-family="JetBrains Mono" font-size="9" fill="var(--muted)" letter-spacing="1.5">RAYS AT ANGLE θ · ${state.N} SOURCES${nSineDraw < state.N ? ` (SHOWING ${nSineDraw})` : ''}</text>`;
+
+  // Divider
+  s += `<line x1="560" y1="30" x2="560" y2="${H - 30}" stroke="var(--grid)" stroke-width="1" stroke-dasharray="2 5"/>`;
+
+  // ========== RIGHT: phasor chain ==========
+  s += `<text x="600" y="26" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" letter-spacing="1.8">PHASOR SUM · N = ${state.N}  ·  Δφ = ${(p.dphi * 180 / Math.PI).toFixed(2)}°</text>`;
+  // Pin START. Chain curls UPWARD (CCW) from horizontal, so place START low to give room.
+  const startX = 620;
+  const startY = 420;
+
+  const totalLen = 360;
+  const unitLen = totalLen / state.N;
+
+  // Chain rotation: positive dphi rotates CCW on screen (y-axis is down → negate sin).
+  // Chain curls upward from START.
+  const pts = [{ x: startX, y: startY }];
+  let cx2 = startX, cy2 = startY;
+  let ang = 0;
+  for (let i = 0; i < state.N; i++) {
+    cx2 += unitLen * Math.cos(ang);
+    cy2 -= unitLen * Math.sin(ang);
+    pts.push({ x: cx2, y: cy2 });
+    ang += p.dphi;
+  }
+
+  // Arrowhead sizing: fixed for N ≤ 16, shrinking above
+  const Neff = Math.max(state.N, 16);
+  const arrowSize = Math.max(3, Math.min(12, 70 / Neff));
+  const strokeW = Math.max(1.3, Math.min(2.6, 32 / Neff));
+
+  s += `<defs>
+    <marker id="phArrGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="${arrowSize}" markerHeight="${arrowSize}" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6459"/>
+    </marker>
+    <marker id="resArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--resultant)"/>
+    </marker>
+  </defs>`;
+
+  // We also need per-color arrowhead markers for the 5 marker phasors. Define them inline,
+  // all the same size as the gray arrowhead marker.
+  for (let k = 0; k < M; k++) {
+    const col = phasorColor(k / (M - 1));
+    s += `<defs>
+      <marker id="phArrC${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="${arrowSize}" markerHeight="${arrowSize}" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="${col}"/>
+      </marker>
+    </defs>`;
+  }
+
+  const shortenBy = Math.min(unitLen * 0.22, arrowSize * 1.0);
+
+  for (let i = 0; i < state.N; i++) {
+    const a = pts[i], bpt = pts[i + 1];
+    const dx = bpt.x - a.x, dy = bpt.y - a.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ex = bpt.x - (dx / len) * shortenBy;
+    const ey = bpt.y - (dy / len) * shortenBy;
+
+    const isMarker = colorForChainIdx.has(i);
+    if (isMarker) {
+      const k = colorForChainIdx.get(i);
+      const col = phasorColor(k / (M - 1));
+      s += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="${col}" stroke-width="${strokeW}" stroke-linecap="butt" marker-end="url(#phArrC${k})"/>`;
+    } else {
+      s += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#6b6459" stroke-width="${strokeW}" stroke-linecap="butt" marker-end="url(#phArrGray)"/>`;
     }
-    path.setAttribute('d', d.trim());
-
-    const tx = Ex(state.probe), ty = Ey(state.probe);
-    tip.setAttribute('x1', 0);  tip.setAttribute('y1', 0);
-    tip.setAttribute('x2', tx); tip.setAttribute('y2', -ty);
-    tipDot.setAttribute('cx', tx);
-    tipDot.setAttribute('cy', -ty);
   }
 
-  // ============================================================
-  // Stokes parameters & angles readout
-  // ============================================================
-  function updateReadout(){
-    const Ax = state.Ax, Ay = state.Ay, delta = state.delta;
-    const I = Ax*Ax + Ay*Ay;
-    const Q = Ax*Ax - Ay*Ay;
-    const U = 2 * Ax * Ay * Math.cos(delta);
-    const V = 2 * Ax * Ay * Math.sin(delta);
+  // START marker
+  s += `<circle cx="${pts[0].x}" cy="${pts[0].y}" r="6" fill="var(--ink)"/>`;
+  s += `<circle cx="${pts[0].x}" cy="${pts[0].y}" r="2.5" fill="var(--paper)"/>`;
+  s += `<text x="${pts[0].x - 12}" y="${pts[0].y + 4}" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="end" font-weight="500">START</text>`;
 
-    const q = Q / I, u = U / I, v = V / I;
-    const p = Math.sqrt(q*q + u*u + v*v);
+  // END marker
+  s += `<circle cx="${pts[state.N].x}" cy="${pts[state.N].y}" r="5" fill="var(--accent)"/>`;
+  s += `<circle cx="${pts[state.N].x}" cy="${pts[state.N].y}" r="2" fill="var(--paper)"/>`;
 
-    const theta = 0.5 * Math.atan2(u, q);
-    const eps   = 0.5 * (p === 0 ? 0 : Math.asin(v / p));
-    const e     = Math.tan(eps);
-    const deg = x => x * 180 / Math.PI;
-
-    sTheta.textContent = deg(theta).toFixed(2);
-    sEps.textContent   = deg(eps).toFixed(2);
-    sEll.textContent   = (Math.abs(e) > 1e-6 ? e.toFixed(3) : '0.000');
-    sP.textContent     = p.toFixed(3);
-
-    if (Math.abs(v) <= 1e-9) sHand.textContent = 'Linear';
-    else sHand.textContent = (v > 0 ? 'Left-handed' : 'Right-handed');
+  // Resultant arrow
+  const start = pts[0], end = pts[state.N];
+  const rdx = end.x - start.x, rdy = end.y - start.y;
+  const rlen = Math.sqrt(rdx * rdx + rdy * rdy);
+  if (rlen > 4) {
+    const shortenRes = 8;
+    const rex = end.x - (rdx / rlen) * shortenRes;
+    const rey = end.y - (rdy / rlen) * shortenRes;
+    s += `<line x1="${start.x}" y1="${start.y}" x2="${rex}" y2="${rey}" stroke="var(--resultant)" stroke-width="2" marker-end="url(#resArr)" opacity="0.95"/>`;
   }
 
-  function updateAll(){
-    update3D();
-    buildEllipse();
-    updateEllipse();
-    updateReadout();
-    renderer.render(scene, camera);
-  }
+  // Fixed-position E(θ) readout above the chain graphic
+  const readoutCx = 840;
+  const readoutY = 50;
+  s += `<text x="${readoutCx}" y="${readoutY}" font-family="Cormorant Garamond" font-style="italic" font-size="24" fill="var(--resultant)" text-anchor="middle" font-weight="600">E(θ)</text>`;
+  s += `<text x="${readoutCx}" y="${readoutY + 22}" font-family="JetBrains Mono" font-size="12" fill="var(--resultant)" text-anchor="middle">|E| / E₀ = ${Math.abs(p.amp).toFixed(3)}</text>`;
 
-  function setOuts(){
-    outs.delta.textContent = state.delta.toFixed(2) + ' rad';
-    outs.t0.textContent    = state.t0.toFixed(2)    + ' rad';
-    outs.Ax.textContent    = (+state.Ax).toFixed(2);
-    outs.Ay.textContent    = (+state.Ay).toFixed(2);
-    outs.probe.textContent = state.probe.toFixed(2);
-  }
+  svg.innerHTML = s;
+}
 
-  // Slider hookups
-  Object.entries(inputs).forEach(([k, el]) => {
-    el.addEventListener('input', () => {
-      if (k === 'planes') state[k] = el.checked;
-      else state[k] = +el.value;
-      setOuts();
-      updateAll();
-    });
-  });
-
-  // Preset buttons (delta only)
-  document.querySelectorAll('.presetBtn').forEach(b => {
-    b.addEventListener('click', () => {
-      const d = +b.dataset.delta;
-      state.delta = d;
-      inputs.delta.value = d;
-      setOuts();
-      updateAll();
-    });
-  });
-
-  // Resize handler
-  function resize(){
-    const w = elThree.clientWidth;
-    const h = elThree.clientHeight;
-    if (w === 0 || h === 0) return;
-    renderer.setSize(w, h);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', resize);
-
-  // Animation (advance t0)
-  let raf = null;
-  const btn = document.getElementById('toggleAnim');
-  function loop(){
-    state.t0 = (state.t0 + 0.02) % TAU;
-    inputs.t0.value = state.t0;
-    outs.t0.textContent = state.t0.toFixed(2) + ' rad';
-    updateAll();
-    raf = requestAnimationFrame(loop);
-  }
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    state.anim = !state.anim;
-    btn.textContent = state.anim ? '❚❚ Pause' : '▶ Play';
-    btn.classList.toggle('active', state.anim);
-    if (state.anim) loop();
-    else { cancelAnimationFrame(raf); raf = null; }
-  });
-
-  // Initial draw
-  inputs.planes.checked = state.planes;
-  setOuts();
-  // Wait one frame so layout settles
-  requestAnimationFrame(() => { resize(); updateAll(); });
-})();
+render();
+window.addEventListener('resize', render);
 </script>
+
 </body>
 </html>

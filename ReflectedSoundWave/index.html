@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standing Wave — Particle & Pressure Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --ink: #1a1a1a;
+      --paper: #faf8f3;
+      --accent: #b8341f;
+      --wave: #2c5f7c;
+      --warm: #d97420;
+      --good: #2f9e44;
+      --grid: #d8d2c4;
+      --muted: #6b6459;
+      --rule: #2a2520;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+    }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    header {
+      border-bottom: 2px solid var(--rule);
+      padding: 14px 32px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 30px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      top: 4px; left: 32px; right: 32px;
+      height: 1px;
+      background: var(--rule);
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+    h1 em { font-style: italic; color: var(--accent); }
+    .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--muted);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      padding: 18px 32px 28px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      padding: 14px 18px 16px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-label {
+      position: absolute;
+      top: -9px;
+      left: 18px;
+      background: var(--bg);
+      padding: 0 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    canvas {
+      width: 100%;
+      height: 520px;
+      display: block;
+      background: transparent;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 14px; height: 3px; }
+
+    aside { display: flex; flex-direction: column; gap: 14px; }
+
+    .control-group {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      padding: 14px 18px;
+    }
+    .control-group h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--grid);
+    }
+    label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 2px;
+      background: var(--rule);
+      outline: none;
+      margin-bottom: 14px;
+    }
+    input[type="range"]:last-child { margin-bottom: 2px; }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--rule);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--rule);
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; margin-bottom: 4px; }
+    button {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 8px 10px;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--rule);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    button:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    /* Select */
+    select {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 6px 8px;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--rule);
+      border-radius: 0;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    /* Checkboxes */
+    .checks { display: flex; flex-direction: column; gap: 6px; }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .check-row input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+    .check-row .swatch { width: 14px; height: 3px; flex-shrink: 0; }
+
+    .kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--ink);
+    }
+    .shortcuts {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .signature {
+      position: fixed;
+      right: 14px;
+      bottom: 8px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1000px) {
+      main { grid-template-columns: 1fr; }
+      canvas { height: 460px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Standing wave</h1>
+  
+</header>
+
+<main>
+  <div class="panel">
+    <span class="panel-label">Displacement, Particles, & Pressure</span>
+    <canvas id="c"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="swatch" style="background: var(--wave);"></div>Incident (→)</div>
+      <div class="legend-item"><div class="swatch" style="background: var(--warm);"></div>Reflected (←)</div>
+      <div class="legend-item"><div class="swatch" style="background: var(--good);"></div>Total (standing)</div>
+      <div class="legend-item"><div class="swatch" style="background: var(--ink); opacity: 0.5;"></div>Boundary</div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="control-group">
+      <h3>Run</h3>
+      <div class="btn-row">
+        <button id="toggle">Pause</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Boundary</h3>
+      <select id="boundary">
+        <option value="fixed" selected>Rigid wall (u = 0)</option>
+        <option value="free">Open end (∂u/∂x = 0)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h3>Parameters</h3>
+
+      <div class="slider-row">
+        <label>Time <span style="text-transform:none; letter-spacing:0;">t</span></label>
+        <span class="value" id="tVal">0.00</span>
+      </div>
+      <input id="time" type="range" min="0.00" max="10.00" step="0.001" value="0.00" />
+
+      <div class="slider-row">
+        <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
+        <span class="value" id="lambdaVal">0.35</span>
+      </div>
+      <input id="lambda" type="range" min="0.10" max="0.80" step="0.01" value="0.35" />
+
+      <div class="slider-row">
+        <label>Phase <span style="text-transform:none; letter-spacing:0;">ϕ</span></label>
+        <span class="value" id="sigmaVal">0.00</span>
+      </div>
+      <input id="sigma" type="range" min="0.00" max="6.28" step="0.01" value="0.00" />
+
+      <div class="slider-row">
+        <label>Amplitude <span style="text-transform:none; letter-spacing:0;">A</span></label>
+        <span class="value" id="ampVal">0.65</span>
+      </div>
+      <input id="amp" type="range" min="0.00" max="1.00" step="0.01" value="0.65" />
+
+      <div class="slider-row">
+        <label>Playback speed</label>
+        <span class="value" id="tsVal">0.25</span>
+      </div>
+      <input id="ts" type="range" min="0.00" max="1.00" step="0.01" value="0.25" />
+
+      <div class="slider-row">
+        <label>Particles <span style="text-transform:none; letter-spacing:0;">N</span></label>
+        <span class="value" id="nVal">140</span>
+      </div>
+      <input id="n" type="range" min="40" max="220" step="1" value="140" />
+    </div>
+
+    <div class="control-group">
+      <h3>Show curves</h3>
+      <div class="checks">
+        <label class="check-row"><input type="checkbox" id="showInc" checked /><div class="swatch" style="background: var(--wave);"></div>Incident</label>
+        <label class="check-row"><input type="checkbox" id="showRefl" checked /><div class="swatch" style="background: var(--warm);"></div>Reflected</label>
+        <label class="check-row"><input type="checkbox" id="showTotal" checked /><div class="swatch" style="background: var(--good);"></div>Total</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Shortcuts</h3>
+      <div class="shortcuts">
+        <span class="kbd">Space</span> play/pause<br>
+        <span class="kbd">R</span> reset<br>
+        <span class="kbd">←</span> <span class="kbd">→</span> scrub time
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="signature">RM</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  // Color palette — read from CSS variables so we stay consistent with the page theme
+  const rootStyle = getComputedStyle(document.documentElement);
+  const COL = {
+    ink:    rootStyle.getPropertyValue('--ink').trim()    || '#1a1a1a',
+    muted:  rootStyle.getPropertyValue('--muted').trim()  || '#6b6459',
+    grid:   rootStyle.getPropertyValue('--grid').trim()   || '#d8d2c4',
+    paper:  rootStyle.getPropertyValue('--paper').trim()  || '#faf8f3',
+    accent: rootStyle.getPropertyValue('--accent').trim() || '#b8341f',
+    wave:   rootStyle.getPropertyValue('--wave').trim()   || '#2c5f7c',
+    warm:   rootStyle.getPropertyValue('--warm').trim()   || '#d97420',
+    good:   rootStyle.getPropertyValue('--good').trim()   || '#2f9e44',
+  };
+
+  // Helper to produce rgba with alpha from a hex color
+  function hexToRgba(hex, a) {
+    const h = hex.replace('#', '');
+    const n = h.length === 3
+      ? h.split('').map(c => parseInt(c + c, 16))
+      : [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    return `rgba(${n[0]}, ${n[1]}, ${n[2]}, ${a})`;
+  }
+
+  // UI
+  const el = {
+    toggle: document.getElementById('toggle'),
+    reset: document.getElementById('reset'),
+    boundary: document.getElementById('boundary'),
+
+    showInc: document.getElementById('showInc'),
+    showRefl: document.getElementById('showRefl'),
+    showTotal: document.getElementById('showTotal'),
+
+    time: document.getElementById('time'),
+    tVal: document.getElementById('tVal'),
+
+    lambda: document.getElementById('lambda'),
+    sigma: document.getElementById('sigma'),
+    amp: document.getElementById('amp'),
+    ts: document.getElementById('ts'),
+    n: document.getElementById('n'),
+
+    lambdaVal: document.getElementById('lambdaVal'),
+    sigmaVal: document.getElementById('sigmaVal'),
+    ampVal: document.getElementById('ampVal'),
+    tsVal: document.getElementById('tsVal'),
+    nVal: document.getElementById('nVal'),
+  };
+
+  // Simulation space: x in [0, L]
+  const L = 1.0;
+  const V_FIXED = 0.30;
+  const ROWS = 3;
+  const rowOffsets = [-1, 0, 1];
+  let particles = [];
+
+  let running = true;
+  let t = 0;
+  let last = performance.now();
+  let isScrubbing = false;
+
+  function makeParticles(N) {
+    particles = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let i = 0; i < N; i++) {
+        const x0 = (i / (N - 1)) * L;
+        particles.push({ x0, r });
+      }
+    }
+  }
+
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const lerp = (a, b, u) => a + (b - a) * u;
+
+  function drawArrow(x0, y0, x1, y1, strokeStyle) {
+    const dx = x1 - x0, dy = y1 - y0;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.5) return;
+
+    const head = 7;
+    const ang = Math.atan2(dy, dx);
+
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.fillStyle = strokeStyle;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - head * Math.cos(ang - Math.PI / 6), y1 - head * Math.sin(ang - Math.PI / 6));
+    ctx.lineTo(x1 - head * Math.cos(ang + Math.PI / 6), y1 - head * Math.sin(ang + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function exampleXs(params, N) {
+    const lam = params.lambda;
+    const dx = L / Math.max(1, (N - 1));
+    const snap = (x) => clamp(Math.round(x / dx) * dx, 0, L);
+
+    if (params.boundary === 'fixed') {
+      const nodeX = snap(clamp(L - lam, 0.02, L - 0.02));
+      const antiX = snap(clamp(L - lam / 4, 0.02, L - 0.02));
+      const midX  = snap(clamp(nodeX + 0.5 * (antiX - nodeX), 0.02, L - 0.02));
+      return [
+        { x: nodeX, label: 'node' },
+        { x: antiX, label: 'antinode' },
+        { x: midX,  label: 'between' },
+      ];
+    }
+    const antiX = snap(clamp(L - lam, 0.02, L - 0.02));
+    const nodeX = snap(clamp(L - lam / 4, 0.02, L - 0.02));
+    const midX  = snap(clamp(antiX + 0.5 * (nodeX - antiX), 0.02, L - 0.02));
+    return [
+      { x: nodeX, label: 'node' },
+      { x: antiX, label: 'antinode' },
+      { x: midX,  label: 'between' },
+    ];
+  }
+
+  function uInc(x, tt, A, k, v, phi) {
+    return A * Math.sin(k * (x - v * tt) + phi);
+  }
+  function uImg(x, tt, A, k, v, phi) {
+    return uInc(2 * L - x, tt, A, k, v, phi);
+  }
+  function reflSign(boundary) {
+    return boundary === 'fixed' ? -1 : +1;
+  }
+  function uRefl(x, tt, params) {
+    const { A, k, v, phi, boundary } = params;
+    return reflSign(boundary) * uImg(x, tt, A, k, v, phi);
+  }
+  function uTotal(x, tt, params) {
+    const { A, k, v, phi } = params;
+    return uInc(x, tt, A, k, v, phi) + uRefl(x, tt, params);
+  }
+
+  function resize() {
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function readParams() {
+    const lambda = parseFloat(el.lambda.value);
+    const phi = parseFloat(el.sigma.value);
+    const A = parseFloat(el.amp.value);
+    const v = V_FIXED;
+    const play = parseFloat(el.ts.value);
+    const N = parseInt(el.n.value, 10);
+    const k = 2 * Math.PI / lambda;
+    const boundary = el.boundary.value;
+
+    const T = lambda / Math.max(1e-6, v);
+    const tMax = Math.max(2, 6 * T);
+
+    if (!isScrubbing) {
+      el.time.max = tMax.toFixed(3);
+      el.time.min = '0.000';
+      el.time.step = Math.max(0.001, (tMax / 4000)).toFixed(6);
+    }
+
+    el.lambdaVal.textContent = lambda.toFixed(2);
+    el.sigmaVal.textContent = phi.toFixed(2);
+    el.ampVal.textContent = A.toFixed(2);
+    el.tsVal.textContent = play.toFixed(2);
+    el.nVal.textContent = String(N);
+    el.tVal.textContent = t.toFixed(3);
+
+    return { lambda, phi, A, v, play, k, boundary, N, tMax };
+  }
+
+  // Font strings used in canvas drawing
+  const FONT_MONO_LABEL = "10px 'JetBrains Mono', monospace";
+  const FONT_MONO_SMALL = "11px 'JetBrains Mono', monospace";
+  const FONT_SERIF_ITALIC = "italic 14px 'Cormorant Garamond', serif";
+
+  function draw(tt, params) {
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = 28;
+    const left = pad;
+    const right = w - pad;
+    const top = pad;
+    const bottom = h - pad;
+
+    const waveY0 = lerp(top, bottom, 0.22);
+    const yExGap = lerp(top, bottom, 0.50);
+    const baseY = lerp(top, bottom, 0.64);
+    const pressY0 = lerp(top, bottom, 0.88);
+
+    const xToPx = (x) => lerp(left, right, x / L);
+
+    // Visual gain for particle displacement
+    const dispPx = 30 * params.A;
+
+    // Boundary wall — dark ink with hatching on the outside
+    const wallX = xToPx(L);
+    ctx.save();
+    ctx.strokeStyle = COL.ink;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wallX, top);
+    ctx.lineTo(wallX, bottom);
+    ctx.stroke();
+
+    // Barrier hatching outside the wall (right side)
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = hexToRgba(COL.ink, 0.7);
+    for (let y = top + 4; y < bottom - 4; y += 9) {
+      ctx.beginPath();
+      ctx.moveTo(wallX, y + 7);
+      ctx.lineTo(wallX + 8, y);
+      ctx.stroke();
+    }
+
+    // Wall label — italic serif
+    ctx.fillStyle = COL.muted;
+    ctx.font = FONT_SERIF_ITALIC;
+    ctx.textAlign = 'right';
+    ctx.fillText(params.boundary === 'fixed' ? 'rigid wall  (u = 0)' : 'open end  (∂u/∂x = 0)', wallX - 10, top + 14);
+    ctx.restore();
+
+    // Sample waves
+    const M = 420;
+    const xs = new Array(M);
+    const incs = new Array(M);
+    const refls = new Array(M);
+    const tots = new Array(M);
+    const pincs = new Array(M);
+    const prefls = new Array(M);
+    const ptots = new Array(M);
+    const pAbsMax = Math.max(1e-6, 2 * Math.abs(params.A * params.k));
+
+    for (let i = 0; i < M; i++) {
+      const x = (i / (M - 1)) * L;
+      xs[i] = x;
+      const ui = uInc(x, tt, params.A, params.k, params.v, params.phi);
+      const ur = uRefl(x, tt, params);
+      incs[i] = ui; refls[i] = ur; tots[i] = ui + ur;
+
+      const phaseI = params.k * (x - params.v * tt) + params.phi;
+      const pI = -params.A * params.k * Math.cos(phaseI);
+      const phaseR = params.k * (2 * L - x - params.v * tt) + params.phi;
+      const s = reflSign(params.boundary);
+      const pR = s * params.A * params.k * Math.cos(phaseR);
+      const pT = pI + pR;
+
+      pincs[i] = pI; prefls[i] = pR; ptots[i] = pT;
+    }
+
+    // ===== Displacement axes =====
+    ctx.save();
+    ctx.strokeStyle = COL.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(left, waveY0);
+    ctx.lineTo(right, waveY0);
+    ctx.stroke();
+    ctx.restore();
+
+    // Section label (displacement)
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = FONT_MONO_LABEL;
+    ctx.textAlign = 'left';
+    const prevAlign = ctx.textAlign;
+    // small-caps via letter-spacing: use explicit spacing by just rendering upper-case
+    ctx.fillText('DISPLACEMENT WAVE', left, waveY0 - 82);
+    ctx.restore();
+
+    const scaleU = 46;
+    const examples = exampleXs(params, params.N);
+    const dxEx = L / Math.max(1, (params.N - 1));
+    const exTol = dxEx / 6;
+
+    function drawCurve(arr, strokeStyle, label, labelX) {
+      ctx.save();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = strokeStyle;
+      ctx.beginPath();
+      for (let i = 0; i < M; i++) {
+        const x = xToPx(xs[i]);
+        const y = waveY0 - arr[i] * scaleU;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = strokeStyle;
+      ctx.font = FONT_SERIF_ITALIC;
+      ctx.textAlign = 'left';
+      ctx.fillText(label, labelX, waveY0 - 56);
+      ctx.restore();
+    }
+
+    let labelX = left;
+    if (el.showInc.checked) {
+      drawCurve(incs, COL.wave, 'incident  →', labelX);
+      labelX += 120;
+    }
+    if (el.showRefl.checked) {
+      drawCurve(refls, COL.warm, 'reflected  ←', labelX);
+      labelX += 130;
+    }
+    if (el.showTotal.checked) {
+      drawCurve(tots, COL.good, 'total (standing)', labelX);
+    }
+
+    // ===== Example displacement arrows =====
+    {
+      const yEx = yExGap;
+      const arrowScale = dispPx;
+
+      for (const ex of examples) {
+        const x0 = xToPx(ex.x);
+
+        // vertical guide line
+        ctx.save();
+        ctx.strokeStyle = COL.grid;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x0, waveY0 + 8);
+        ctx.lineTo(x0, yEx - 16);
+        ctx.stroke();
+        ctx.restore();
+
+        // label
+        ctx.save();
+        ctx.fillStyle = COL.muted;
+        ctx.font = FONT_SERIF_ITALIC;
+        ctx.textAlign = 'center';
+        ctx.fillText(ex.label, x0, yEx - 18);
+        ctx.restore();
+
+        // equilibrium marker
+        ctx.save();
+        ctx.fillStyle = hexToRgba(COL.ink, 0.5);
+        ctx.beginPath();
+        ctx.arc(x0, yEx, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        const uI = uInc(ex.x, tt, params.A, params.k, params.v, params.phi);
+        const uR = uRefl(ex.x, tt, params);
+        const uT = uI + uR;
+
+        const incEnd = clamp(x0 + uI * arrowScale, left, right);
+        const refEnd = clamp(x0 + uR * arrowScale, left, right);
+        const curX   = clamp(x0 + uT * arrowScale, left, right);
+
+        drawArrow(x0, yEx - 7, incEnd, yEx - 7, COL.wave);
+        drawArrow(x0, yEx + 7, refEnd, yEx + 7, COL.warm);
+        drawArrow(x0, yEx + 22, curX, yEx + 22, COL.good);
+
+        // example particle (total-displacement position)
+        ctx.save();
+        ctx.fillStyle = COL.good;
+        ctx.strokeStyle = COL.paper;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(curX, yEx, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // ===== Particle rows =====
+    const rowSpacing = 22;
+    const rowYs = rowOffsets.map((o) => baseY + o * rowSpacing);
+
+    // Guide lines
+    ctx.save();
+    ctx.strokeStyle = COL.grid;
+    ctx.lineWidth = 1;
+    for (const y of rowYs) {
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Section label (particles)
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = FONT_MONO_LABEL;
+    ctx.textAlign = 'left';
+    ctx.fillText('AIR PARTICLES', left, rowYs[0] - 14);
+    ctx.restore();
+
+    // Particles (use total displacement)
+    ctx.save();
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const u = uTotal(p.x0, tt, params);
+      const x = xToPx(p.x0) + u * dispPx;
+      const y = rowYs[p.r];
+
+      // highlight example particles in green
+      let exMatch = false;
+      for (const ex of examples) {
+        if (Math.abs(p.x0 - ex.x) < exTol) { exMatch = true; break; }
+      }
+
+      if (exMatch) {
+        ctx.fillStyle = COL.good;
+        ctx.strokeStyle = COL.paper;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(x, y, 4.0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        // subtle row variation in ink opacity
+        const a = p.r === 0 ? 0.55 : (p.r === 1 ? 0.72 : 0.55);
+        ctx.fillStyle = hexToRgba(COL.ink, a);
+        ctx.beginPath();
+        ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // ===== Pressure curves =====
+    {
+      // axis line
+      ctx.save();
+      ctx.strokeStyle = COL.grid;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, pressY0);
+      ctx.lineTo(right, pressY0);
+      ctx.stroke();
+
+      // label
+      ctx.fillStyle = COL.muted;
+      ctx.font = FONT_MONO_LABEL;
+      ctx.textAlign = 'left';
+      ctx.fillText('PRESSURE WAVE', left, pressY0 - 56);
+      ctx.restore();
+
+      const scaleP = 42 / (pAbsMax || 1);
+
+      function drawPCurve(arr, strokeStyle) {
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = strokeStyle;
+        ctx.beginPath();
+        for (let i = 0; i < M; i++) {
+          const x = xToPx(xs[i]);
+          const y = pressY0 - arr[i] * scaleP;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (el.showInc.checked)   drawPCurve(pincs, COL.wave);
+      if (el.showRefl.checked)  drawPCurve(prefls, COL.warm);
+      if (el.showTotal.checked) drawPCurve(ptots, COL.good);
+    }
+  }
+
+  function setTime(newT, { fromSlider = false } = {}) {
+    t = newT;
+    if (fromSlider) {
+      running = false;
+      el.toggle.textContent = 'Play';
+    }
+    el.time.value = String(t);
+  }
+
+  function resetSim() { setTime(0); }
+
+  function step(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    const params = readParams();
+    const perRow = params.N;
+    if (particles.length !== perRow * ROWS) makeParticles(perRow);
+    if (running && !isScrubbing) {
+      t += dt * params.play;
+      if (t > params.tMax) t -= params.tMax;
+      el.time.value = String(t);
+    }
+    draw(t, params);
+    requestAnimationFrame(step);
+  }
+
+  el.toggle.addEventListener('click', () => {
+    running = !running;
+    el.toggle.textContent = running ? 'Pause' : 'Play';
+  });
+  el.reset.addEventListener('click', () => resetSim());
+
+  el.time.addEventListener('pointerdown', () => { isScrubbing = true; });
+  el.time.addEventListener('pointerup', () => { isScrubbing = false; });
+  el.time.addEventListener('input', () => {
+    const newT = parseFloat(el.time.value);
+    setTime(newT, { fromSlider: true });
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      running = !running;
+      el.toggle.textContent = running ? 'Pause' : 'Play';
+    }
+    if (e.key.toLowerCase() === 'r') resetSim();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const params = readParams();
+      const stepT = Math.max(0.002, params.tMax / 800);
+      const dir = (e.key === 'ArrowRight') ? +1 : -1;
+      setTime(clamp(t + dir * stepT, 0, params.tMax), { fromSlider: true });
+    }
+  });
+
+  function init() {
+    resize();
+    window.addEventListener('resize', resize);
+    makeParticles(parseInt(el.n.value, 10));
+    setTime(0);
+    requestAnimationFrame((now) => {
+      last = now;
+      requestAnimationFrame(step);
+    });
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snell's Law — Huygens Construction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1a1a1a;
+    --paper: #faf8f3;
+    --accent: #b8341f;
+    --wave: #2c5f7c;
+    --wave2: #1f4256;        /* slightly darker wave color for medium 2 */
+    --warm: #d97420;
+    --good: #2f9e44;
+    --grid: #d8d2c4;
+    --muted: #6b6459;
+    --rule: #2a2520;
+    --med1: #faf8f3;          /* paper, basically transparent feel for medium 1 */
+    --med2: #ece4d2;          /* warmer tan for medium 2 */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+  }
+  body { display: flex; flex-direction: column; }
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding: 14px 32px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 30px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    top: 4px; left: 32px; right: 32px;
+    height: 1px;
+    background: var(--rule);
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+  }
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+    padding: 18px 32px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 18px 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .panel-label {
+    position: absolute;
+    top: -9px;
+    left: 18px;
+    background: var(--bg);
+    padding: 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .svg-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  svg { display: block; width: 100%; height: 100%; max-height: 100%; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 3px; }
+
+  aside { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; }
+  .control-group {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 18px;
+  }
+  .control-group h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--grid);
+  }
+  label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--rule);
+    outline: none;
+    margin-bottom: 14px;
+  }
+  input[type="range"]:last-child { margin-bottom: 2px; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 4px; }
+  button {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 8px 10px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .check-row input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+
+  .readout {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .readout span { color: var(--ink); }
+  .readout .big { color: var(--accent); font-size: 13px; }
+  .readout .tir {
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 10px;
+    margin-top: 6px;
+    display: block;
+  }
+
+  .signature {
+    position: fixed;
+    right: 14px;
+    bottom: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Snell's Law</h1>
+  
+</header>
+
+<main>
+  <div class="stage">
+    <div class="panel">
+      <span class="panel-label" id="panelLabel">Wavefronts at an Interface</span>
+      <div class="svg-wrap">
+        <svg id="mainSvg" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="swatch" style="background: var(--wave);"></div>Wavefront in medium 1</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--wave2);"></div>Wavefront in medium 2</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--ink);"></div>Ray direction</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--accent);"></div>Interface · normal</div>
+        <div class="legend-item" id="hwLegend" style="display:none"><div class="swatch" style="background: var(--good); opacity: 0.8;"></div>Huygens wavelets</div>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="control-group">
+      <h3>View</h3>
+      <div class="btn-row">
+        <button id="modeAnim" class="active">Animated</button>
+        <button id="modeFrozen">Construction</button>
+      </div>
+      <label class="check-row" id="triRow" style="display:none">
+        <input type="checkbox" id="showTri">
+        Show derivation triangles
+      </label>
+    </div>
+
+    <div class="control-group">
+      <h3>Parameters</h3>
+
+      <div class="slider-row">
+        <label>Index <span style="text-transform:none; letter-spacing:0;">n₁</span></label>
+        <span class="value" id="n1Val">1.00</span>
+      </div>
+      <input type="range" id="n1Slider" min="1.00" max="2.50" step="0.01" value="1.00">
+
+      <div class="slider-row">
+        <label>Index <span style="text-transform:none; letter-spacing:0;">n₂</span></label>
+        <span class="value" id="n2Val">1.50</span>
+      </div>
+      <input type="range" id="n2Slider" min="1.00" max="2.50" step="0.01" value="1.50">
+
+      <div class="slider-row">
+        <label>Angle <span style="text-transform:none; letter-spacing:0;">θ₁ (deg)</span></label>
+        <span class="value" id="angVal">35°</span>
+      </div>
+      <input type="range" id="angSlider" min="0" max="85" step="0.5" value="35">
+
+      <div class="slider-row">
+        <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
+        <span class="value" id="lamVal">60</span>
+      </div>
+      <input type="range" id="lamSlider" min="30" max="120" step="1" value="60">
+    </div>
+
+    <div class="control-group" id="animControls">
+      <h3>Animation</h3>
+      <div class="btn-row">
+        <button id="playBtn" class="active">Pause</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+      <div class="slider-row" style="margin-top: 10px;">
+        <label>Speed</label>
+        <span class="value" id="speedVal">1.0×</span>
+      </div>
+      <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+    </div>
+
+    <div class="control-group" id="constControls" style="display:none">
+      <h3>Time</h3>
+      <div class="slider-row">
+        <label>Scrub time <span style="text-transform:none; letter-spacing:0;">t</span></label>
+        <span class="value" id="constTimeVal">Δt</span>
+      </div>
+      <input type="range" id="constTimeSlider" min="0" max="2" step="0.01" value="1">
+    </div>
+
+    <div class="control-group">
+      <h3>Readout</h3>
+      <div class="readout">
+        Speed ratio v₂/v₁ = n₁/n₂: <span id="vrVal">—</span><br>
+        Refraction angle θ₂: <span class="big" id="th2Val">—</span><br>
+        Critical angle θ_c: <span id="tcVal">—</span>
+        <span class="tir" id="tirFlag" style="display:none">⚠ Total internal reflection</span>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="signature">RM</div>
+
+<script>
+// =========================================================
+// State
+// =========================================================
+const state = {
+  n1: 1.00,
+  n2: 1.50,
+  th1Deg: 35,
+  lam: 60,           // wavelength in pixels (in the medium with n=1)
+  mode: 'anim',      // 'anim' | 'frozen'
+  showTri: false,
+  playing: true,
+  speed: 1.0,
+  t: 0,              // animated mode: continuous time, in seconds
+  constT: 1.0,       // construction mode: time as a multiple of Δt (1.0 = textbook moment)
+};
+let lastFrameMs = performance.now();
+
+// =========================================================
+// DOM bindings
+// =========================================================
+const $ = id => document.getElementById(id);
+const n1Slider = $('n1Slider'), n2Slider = $('n2Slider');
+const angSlider = $('angSlider'), lamSlider = $('lamSlider');
+const speedSlider = $('speedSlider');
+const n1Val = $('n1Val'), n2Val = $('n2Val'), angVal = $('angVal');
+const lamVal = $('lamVal'), speedVal = $('speedVal');
+const vrVal = $('vrVal'), th2Val = $('th2Val'), tcVal = $('tcVal'), tirFlag = $('tirFlag');
+const modeAnimBtn = $('modeAnim'), modeFrozenBtn = $('modeFrozen');
+const triRow = $('triRow'), showTri = $('showTri');
+const animControls = $('animControls');
+const constControls = $('constControls');
+const playBtn = $('playBtn'), resetBtn = $('resetBtn');
+const constTimeSlider = $('constTimeSlider'), constTimeVal = $('constTimeVal');
+
+constTimeSlider.addEventListener('input', e => {
+  state.constT = parseFloat(e.target.value);
+  render();
+});
+const panelLabel = $('panelLabel');
+const hwLegend = $('hwLegend');
+
+n1Slider.addEventListener('input', e => { state.n1 = parseFloat(e.target.value); render(); });
+n2Slider.addEventListener('input', e => { state.n2 = parseFloat(e.target.value); render(); });
+angSlider.addEventListener('input', e => { state.th1Deg = parseFloat(e.target.value); render(); });
+lamSlider.addEventListener('input', e => { state.lam = parseFloat(e.target.value); render(); });
+speedSlider.addEventListener('input', e => { state.speed = parseFloat(e.target.value); render(); });
+
+modeAnimBtn.addEventListener('click', () => setMode('anim'));
+modeFrozenBtn.addEventListener('click', () => setMode('frozen'));
+showTri.addEventListener('change', () => { state.showTri = showTri.checked; render(); });
+playBtn.addEventListener('click', () => {
+  state.playing = !state.playing;
+  playBtn.textContent = state.playing ? 'Pause' : 'Play';
+  playBtn.classList.toggle('active', state.playing);
+  lastFrameMs = performance.now();
+});
+resetBtn.addEventListener('click', () => { state.t = 0; render(); });
+
+function setMode(m) {
+  state.mode = m;
+  modeAnimBtn.classList.toggle('active', m === 'anim');
+  modeFrozenBtn.classList.toggle('active', m === 'frozen');
+  triRow.style.display = (m === 'frozen') ? 'flex' : 'none';
+  hwLegend.style.display = (m === 'frozen') ? 'flex' : 'none';
+  animControls.style.display = (m === 'anim') ? 'block' : 'none';
+  constControls.style.display = (m === 'frozen') ? 'block' : 'none';
+  panelLabel.textContent = (m === 'anim')
+    ? 'Wavefronts at an Interface'
+    : 'Huygens Construction';
+  render();
+}
+
+// =========================================================
+// Physics
+// =========================================================
+function physics() {
+  const th1 = state.th1Deg * Math.PI / 180;
+  const sin1 = Math.sin(th1);
+  const sin2_target = (state.n1 / state.n2) * sin1;   // Snell's law
+  const tir = sin2_target > 1.0;
+  const th2 = tir ? null : Math.asin(sin2_target);
+  // Critical angle exists only when n1 > n2 (going to less-dense medium)
+  const critExists = state.n1 > state.n2;
+  const thC = critExists ? Math.asin(state.n2 / state.n1) : null;
+  return { th1, th2, tir, thC, sin1, sin2: sin2_target, vRatio: state.n1 / state.n2 };
+}
+
+// =========================================================
+// Renderers
+// =========================================================
+function render() {
+  // Update readouts
+  n1Val.textContent = state.n1.toFixed(2);
+  n2Val.textContent = state.n2.toFixed(2);
+  angVal.textContent = state.th1Deg.toFixed(1) + '°';
+  lamVal.textContent = state.lam.toFixed(0);
+  speedVal.textContent = state.speed.toFixed(1) + '×';
+  constTimeVal.textContent = state.constT.toFixed(2) + ' Δt';
+
+  const p = physics();
+  vrVal.textContent = p.vRatio.toFixed(3);
+  if (p.tir) {
+    th2Val.textContent = '— (TIR)';
+    tirFlag.style.display = 'block';
+  } else {
+    th2Val.textContent = (p.th2 * 180 / Math.PI).toFixed(2) + '°';
+    tirFlag.style.display = 'none';
+  }
+  tcVal.textContent = (p.thC === null) ? 'n/a (n₁ ≤ n₂)' : (p.thC * 180 / Math.PI).toFixed(2) + '°';
+
+  if (state.mode === 'anim') drawAnimated(p);
+  else drawFrozen(p);
+}
+
+// =========================================================
+// Common scene chrome (background, interface, normal, labels)
+// =========================================================
+function sceneChrome(p) {
+  const W = 1100, H = 620;
+  const interfaceY = H * 0.5;
+
+  let s = '';
+
+  // Background grid
+  s += `<defs>
+    <pattern id="gridp" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="var(--grid)" stroke-width="0.5"/>
+    </pattern>
+    <marker id="rayArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink)"/>
+    </marker>
+    <marker id="rayArrLite" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="${'var(--muted)'}"/>
+    </marker>
+  </defs>`;
+
+  // Two media as rectangles. Medium 1 is paper-toned (basically transparent); medium 2 is warmer tan.
+  s += `<rect x="0" y="0" width="${W}" height="${interfaceY}" fill="var(--med1)"/>`;
+  s += `<rect x="0" y="${interfaceY}" width="${W}" height="${H - interfaceY}" fill="var(--med2)"/>`;
+  s += `<rect width="${W}" height="${H}" fill="url(#gridp)"/>`;
+
+  // Interface
+  s += `<line x1="0" y1="${interfaceY}" x2="${W}" y2="${interfaceY}" stroke="var(--accent)" stroke-width="1.5"/>`;
+
+  // Normal at the strike point (vertical dashed)
+  const strikeX = W * 0.5;
+  s += `<line x1="${strikeX}" y1="${interfaceY - 200}" x2="${strikeX}" y2="${interfaceY + 200}" stroke="var(--accent)" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>`;
+
+  // Medium labels (right side)
+  s += `<text x="${W - 16}" y="${interfaceY - 12}" font-family="Cormorant Garamond" font-style="italic" font-size="20" fill="var(--muted)" text-anchor="end">medium 1 · n₁ = ${state.n1.toFixed(2)}</text>`;
+  s += `<text x="${W - 16}" y="${interfaceY + 26}" font-family="Cormorant Garamond" font-style="italic" font-size="20" fill="var(--muted)" text-anchor="end">medium 2 · n₂ = ${state.n2.toFixed(2)}</text>`;
+
+  // "normal" label
+  s += `<text x="${strikeX + 8}" y="${interfaceY - 200 + 14}" font-family="Cormorant Garamond" font-style="italic" font-size="12" fill="var(--accent)" opacity="0.7">normal</text>`;
+
+  return { svg: s, interfaceY, strikeX, W, H };
+}
+
+// =========================================================
+// ANIMATED MODE
+// =========================================================
+// =========================================================
+// Wavefront drawing helper — used by both modes
+// Takes a time t (in seconds) and returns SVG string for the wavefronts.
+// =========================================================
+// Returns { svg, traces }. `traces` is an array of trace x-coordinates on the interface,
+// in left-to-right order. (Empty for normal incidence.)
+function drawWavefronts(p, t, layout, opts = {}) {
+  const drawIncident = opts.drawIncident !== false;
+  const drawRefracted = opts.drawRefracted !== false;
+
+  const { interfaceY, strikeX, W, H } = layout;
+  const th1 = p.th1;
+  const v0 = 100;
+  const v1 = v0 / state.n1;
+  const v2 = v0 / state.n2;
+  const sinTh1 = Math.sin(th1);
+  const isNormalIncidence = sinTh1 < 0.01;
+  const lam1 = state.lam;
+  const lam2 = lam1 * state.n1 / state.n2;
+
+  let s = '';
+  const traces = [];
+
+  // Endpoint helpers (clamp to canvas bounds)
+  function med1Endpoint(traceX, dirX, dirY) {
+    let tToTop = -interfaceY / dirY;          // dirY < 0
+    let tToRight = dirX > 0 ? (W - traceX)/dirX : Infinity;
+    let tToLeft = dirX < 0 ? (-traceX)/dirX : Infinity;
+    let tMax = Math.min(tToTop, tToRight, tToLeft);
+    if (tMax < 0) tMax = 0;
+    return { x: traceX + tMax * dirX, y: interfaceY + tMax * dirY };
+  }
+  function med2Endpoint(traceX, dirX, dirY) {
+    let tToBot = (H - interfaceY) / dirY;
+    let tToRight = dirX > 0 ? (W - traceX)/dirX : Infinity;
+    let tToLeft = dirX < 0 ? (-traceX)/dirX : Infinity;
+    let tMax = Math.min(tToBot, tToRight, tToLeft);
+    if (tMax < 0) tMax = 0;
+    return { x: traceX + tMax * dirX, y: interfaceY + tMax * dirY };
+  }
+
+  if (isNormalIncidence) {
+    const offset1 = (v1 * t) % lam1;
+    const offset2 = (v2 * t) % lam2;
+    if (drawIncident) {
+      for (let y = interfaceY - offset1; y > 0; y -= lam1) {
+        s += `<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="var(--wave)" stroke-width="2" opacity="0.8"/>`;
+      }
+    }
+    if (drawRefracted && !p.tir) {
+      for (let y = interfaceY + offset2; y < H; y += lam2) {
+        s += `<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="var(--wave2)" stroke-width="2" opacity="0.8"/>`;
+      }
+    }
+    return { svg: s, traces };
+  }
+
+  const vTrace = v1 / sinTh1;
+  const dxBetweenTraces = lam1 / sinTh1;
+  const baseTrace = strikeX + vTrace * t;
+  const kMax = Math.ceil((baseTrace + W) / dxBetweenTraces);
+  const kMin = Math.floor((baseTrace - 2*W) / dxBetweenTraces);
+
+  const med1Dir = { x: Math.cos(th1), y: -Math.sin(th1) };
+  let med2Dir = null;
+  if (!p.tir) {
+    med2Dir = { x: -Math.cos(p.th2), y: Math.sin(p.th2) };
+  }
+
+  for (let k = kMin; k <= kMax; k++) {
+    const traceX = baseTrace - k * dxBetweenTraces;
+    if (traceX >= 0 && traceX <= W) traces.push(traceX);
+    if (drawIncident) {
+      const e1 = med1Endpoint(traceX, med1Dir.x, med1Dir.y);
+      s += `<line x1="${traceX.toFixed(1)}" y1="${interfaceY.toFixed(1)}" x2="${e1.x.toFixed(1)}" y2="${e1.y.toFixed(1)}" stroke="var(--wave)" stroke-width="2" opacity="0.85"/>`;
+    }
+    if (drawRefracted && !p.tir && med2Dir) {
+      const e2 = med2Endpoint(traceX, med2Dir.x, med2Dir.y);
+      s += `<line x1="${traceX.toFixed(1)}" y1="${interfaceY.toFixed(1)}" x2="${e2.x.toFixed(1)}" y2="${e2.y.toFixed(1)}" stroke="var(--wave2)" stroke-width="2" opacity="0.85"/>`;
+    }
+  }
+
+  traces.sort((a, b) => a - b);
+  return { svg: s, traces };
+}
+
+// =========================================================
+// ANIMATED MODE
+// =========================================================
+function drawAnimated(p) {
+  const layout = sceneChrome(p);
+  const { svg: chrome, interfaceY, strikeX, W, H } = layout;
+  let s = chrome;
+
+  const th1 = p.th1;
+  const r1x = Math.sin(th1), r1y = Math.cos(th1);
+
+  // Draw incident ray
+  const rayUpstream = 320;
+  const rayUpX = strikeX - r1x * rayUpstream;
+  const rayUpY = interfaceY - r1y * rayUpstream;
+  s += `<line x1="${rayUpX.toFixed(1)}" y1="${rayUpY.toFixed(1)}" x2="${strikeX.toFixed(1)}" y2="${interfaceY.toFixed(1)}" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#rayArr)"/>`;
+
+  // Refracted ray
+  if (!p.tir) {
+    const r2x = Math.sin(p.th2), r2y = Math.cos(p.th2);
+    const rayDownstream = 280;
+    const rayDownX = strikeX + r2x * rayDownstream;
+    const rayDownY = interfaceY + r2y * rayDownstream;
+    s += `<line x1="${strikeX.toFixed(1)}" y1="${interfaceY.toFixed(1)}" x2="${rayDownX.toFixed(1)}" y2="${rayDownY.toFixed(1)}" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#rayArr)"/>`;
+  }
+
+  // Wavefronts (incident and refracted)
+  s += drawWavefronts(p, state.t, layout).svg;
+
+  // Angle arcs and labels for θ₁ and θ₂
+  const arcR = 60;
+  s += `<path d="M ${strikeX} ${interfaceY - arcR} A ${arcR} ${arcR} 0 0 0 ${(strikeX - arcR*Math.sin(th1)).toFixed(1)} ${(interfaceY - arcR*Math.cos(th1)).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.2"/>`;
+  const th1LabelX = strikeX - (arcR + 16) * Math.sin(th1/2);
+  const th1LabelY = interfaceY - (arcR + 16) * Math.cos(th1/2);
+  s += `<text x="${th1LabelX.toFixed(1)}" y="${th1LabelY.toFixed(1) }" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">θ₁</text>`;
+
+  if (!p.tir) {
+    const th2 = p.th2;
+    s += `<path d="M ${strikeX} ${interfaceY + arcR} A ${arcR} ${arcR} 0 0 0 ${(strikeX + arcR*Math.sin(th2)).toFixed(1)} ${(interfaceY + arcR*Math.cos(th2)).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.2"/>`;
+    const th2LabelX = strikeX + (arcR + 16) * Math.sin(th2/2);
+    const th2LabelY = interfaceY + (arcR + 16) * Math.cos(th2/2);
+    s += `<text x="${th2LabelX.toFixed(1)}" y="${th2LabelY.toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">θ₂</text>`;
+  }
+
+  // TIR badge
+  if (p.tir) {
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY + 60).toFixed(1)}" font-family="JetBrains Mono" font-size="14" fill="var(--accent)" text-anchor="middle" letter-spacing="2.5">TOTAL INTERNAL REFLECTION</text>`;
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY + 80).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--muted)" text-anchor="middle">no refracted wave exists for θ₁ &gt; θ_c = ${(p.thC*180/Math.PI).toFixed(2)}°</text>`;
+  }
+
+  document.getElementById('mainSvg').innerHTML = s;
+}
+
+// =========================================================
+// FROZEN MODE — Huygens construction
+// =========================================================
+function drawFrozen(p) {
+  const layout = sceneChrome(p);
+  const { svg: chrome, interfaceY, strikeX, W, H } = layout;
+  let s = chrome;
+
+  const th1 = p.th1;
+  const sinTh1 = Math.sin(th1);
+  const cosTh1 = Math.cos(th1);
+
+  // Avoid degeneracy at small angle
+  if (sinTh1 < 0.05) {
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY - 80).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--muted)" text-anchor="middle">at normal incidence the wavefront strikes the entire interface at once;</text>`;
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY - 60).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--muted)" text-anchor="middle">tilt θ₁ &gt; 0 to see the Huygens construction</text>`;
+    document.getElementById('mainSvg').innerHTML = s;
+    return;
+  }
+
+  // ----- Geometric setup (constT-independent) -----
+  const D = Math.min(state.lam * 4, 220);
+  const Bx = strikeX - 100, By = interfaceY;
+  // A's INITIAL position (at t = 0)
+  const A0x = Bx + D * cosTh1;
+  const A0y = By - D * sinTh1;
+  // B' = where A reaches the interface (at t = Δt_full)
+  const Bpx_full = Bx + D / cosTh1;
+  const Bpy = interfaceY;
+  // Full radius of wavelet at B (at constT = 1)
+  const r0_full = D * Math.tan(th1) * (state.n1 / state.n2);
+  // Δt_full in seconds (using v₀ = 100 px/s baseline)
+  const v0 = 100, v1 = v0 / state.n1, v2 = v0 / state.n2;
+  const dtFull = D * Math.tan(th1) / v1;
+  const t_seconds = state.constT * dtFull;
+
+  // ---------- Wavefronts (the periodic family) — with trace points ----------
+  const wf = drawWavefronts(p, t_seconds, layout);
+  s += wf.svg;
+  // Trace points (where each wavefront currently meets the interface), sorted left-to-right.
+  const traces = wf.traces;
+
+  // ----- Time-dependent construction quantities -----
+  // Current "leading-edge" point on the interface that has been struck:
+  //   At constT ≤ 1: linearly between B and B'_full
+  //   At constT > 1: stays at B'_full (no more strikes)
+  const constT_clamped = Math.min(state.constT, 1.0);
+  const Bnow_x = Bx + constT_clamped * (Bpx_full - Bx);
+  const Bnow_y = interfaceY;
+
+  // A's current position
+  let A_now_x, A_now_y, A_in_med2;
+  if (state.constT <= 1.0) {
+    // A still in medium 1, moving along ray 1 from initial position
+    const dist1 = state.constT * D * Math.tan(th1);   // distance traveled along ray 1
+    A_now_x = A0x + dist1 * Math.sin(th1);
+    A_now_y = A0y + dist1 * Math.cos(th1);
+    A_in_med2 = false;
+  } else {
+    // A in medium 2, moving along ray 2 from B' starting at constT = 1
+    const extra = (state.constT - 1) * dtFull * v2;     // distance traveled in med 2
+    if (!p.tir) {
+      A_now_x = Bpx_full + extra * Math.sin(p.th2);
+      A_now_y = Bpy + extra * Math.cos(p.th2);
+    } else {
+      A_now_x = Bpx_full;
+      A_now_y = Bpy;
+    }
+    A_in_med2 = true;
+  }
+
+  // Wavelet radius at B at this moment
+  const r_now = state.constT * r0_full;
+
+  // ---------- Incident ray through A (lightly drawn) ----------
+  const rayLenIn = 220;
+  const rayUpX = A0x - rayLenIn * Math.sin(th1);
+  const rayUpY = A0y - rayLenIn * Math.cos(th1);
+  s += `<line x1="${rayUpX.toFixed(1)}" y1="${rayUpY.toFixed(1)}" x2="${A0x.toFixed(1)}" y2="${A0y.toFixed(1)}" stroke="var(--ink)" stroke-width="1.4" opacity="0.45" marker-end="url(#rayArrLite)"/>`;
+  // Continue ray DOTTED past A to its eventual strike point B'
+  s += `<line x1="${A0x.toFixed(1)}" y1="${A0y.toFixed(1)}" x2="${Bpx_full.toFixed(1)}" y2="${Bpy.toFixed(1)}" stroke="var(--ink)" stroke-width="1.4" opacity="0.45" stroke-dasharray="4 4"/>`;
+
+  // ---------- Incident ray through B (parallel; provides the leg for the θ₁ angle arc at B) ----------
+  // The plane wave has parallel rays. We draw a second parallel ray going up-left from B so that
+  // the θ₁ angle at B has a visible leg to attach to.
+  const rayBx = Bx - rayLenIn * Math.sin(th1);
+  const rayBy = By - rayLenIn * Math.cos(th1);
+  s += `<line x1="${rayBx.toFixed(1)}" y1="${rayBy.toFixed(1)}" x2="${Bx.toFixed(1)}" y2="${By.toFixed(1)}" stroke="var(--ink)" stroke-width="1.4" opacity="0.45" marker-end="url(#rayArrLite)"/>`;
+
+  // Normal at B (the angle θ₁ is between this normal and the incident ray, both meeting at B)
+  s += `<line x1="${Bx.toFixed(1)}" y1="${(By - 90).toFixed(1)}" x2="${Bx.toFixed(1)}" y2="${(By + 90).toFixed(1)}" stroke="var(--accent)" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>`;
+
+  // ---------- ORIGINAL wavefront (B-A at t=0), faintly shown for reference ----------
+  s += `<line x1="${Bx.toFixed(1)}" y1="${By.toFixed(1)}" x2="${A0x.toFixed(1)}" y2="${A0y.toFixed(1)}" stroke="var(--wave)" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.5"/>`;
+
+  // ---------- CURRENT wavefront BA (B_now to A_now), highlighted ----------
+  // The current wavefront connects the current strike point B_now (on the interface) to A_now.
+  // Wait — actually, the "current wavefront" that we're tracking is ALWAYS the same wavefront BA,
+  // which is currently a piecewise line: from A_now (in medium 1 OR 2 depending on constT) along
+  // some direction back to where it currently meets the interface.
+  //
+  // For constT ≤ 1: BA goes from B_now (interface, on the right) up-left to A_now (in medium 1).
+  //   The line is perpendicular to ray 1.
+  //   Length = D * (1 - constT)  (the part of BA still in medium 1).
+  // For constT > 1: BA fully consists of A_now (in medium 2), B' (where A entered med 2), and the
+  //   refracted segment from B' to A_now in medium 2... no actually that's not BA.
+  //   The original wavefront BA fully refracted means: B at t=0 has been radiating wavelets, and
+  //   the new wavefront in medium 2 is the envelope. There's no "BA segment" anymore once t > Δt_full.
+
+  // Just draw BA (current state):
+  if (!A_in_med2) {
+    // BA is the line from B_now to A_now (both in or above medium 1).
+    // B_now is on the interface; A_now is in medium 1.
+    s += `<line x1="${Bnow_x.toFixed(1)}" y1="${Bnow_y.toFixed(1)}" x2="${A_now_x.toFixed(1)}" y2="${A_now_y.toFixed(1)}" stroke="var(--wave)" stroke-width="2.4"/>`;
+  }
+  // (If constT > 1, BA has fully refracted — we just don't draw the original BA segment.)
+
+  // ---------- Huygens wavelets along the interface ----------
+  // FIXED strike positions evenly spaced along [B, B'_full]. Each one is "born" only after the
+  // wavefront's leading edge has reached it (i.e., after state.constT ≥ its fractional position).
+  // After birth, its position stays anchored and the wavelet radius grows as time advances.
+  const NWavelets = 7;
+  for (let i = 0; i < NWavelets; i++) {
+    const f = i / (NWavelets - 1);                         // FIXED fractional position along [B, B'_full]
+    if (state.constT < f) continue;                         // not yet struck
+    const sx = Bx + f * (Bpx_full - Bx);                    // fixed center
+    const r = r0_full * (state.constT - f);                 // grows with time since birth
+    if (r < 1) {
+      // Just born — show only the strike point
+      s += `<circle cx="${sx.toFixed(1)}" cy="${interfaceY.toFixed(1)}" r="2" fill="var(--good)"/>`;
+      continue;
+    }
+    s += `<path d="M ${(sx - r).toFixed(2)} ${interfaceY.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 0 0 ${(sx + r).toFixed(2)} ${interfaceY.toFixed(2)}" fill="none" stroke="var(--good)" stroke-width="1.1" opacity="0.65"/>`;
+    s += `<circle cx="${sx.toFixed(1)}" cy="${interfaceY.toFixed(1)}" r="2" fill="var(--good)"/>`;
+  }
+
+  // ---------- New wavefront in medium 2 ----------
+  // For constT ≤ 1: line from current strike B_now to tangent point on wavelet at B.
+  //   B_now is on the interface. Tangent point P = B + r_now * (sin θ₂, cos θ₂).
+  //   Hmm wait — at constT < 1, the largest wavelet (at B) has radius r_now = constT * r0_full.
+  //   The next wavelet, just emitted at B_now, has radius 0. So the new wavefront should be tangent
+  //   to the wavelet at B and pass through B_now.
+  //   Verify: |B_now - B| = constT * (Bpx_full - Bx) = constT * D / cos(th1). The tangent angle
+  //   θ₂ satisfies sin θ₂ = r_now / |B_now - B| = (constT * r0_full) / (constT * D/cos th1)
+  //                     = r0_full * cos(th1) / D = (n1/n2) * D * tan(th1) * cos(th1) / D
+  //                     = (n1/n2) * sin(th1).
+  //   ✓ Snell's law! And independent of constT — good.
+  //
+  // For constT > 1: line from A_now (in medium 2) to tangent point on wavelet at B with radius constT*r0.
+  //   The tangent direction is perpendicular to BP, where P is the tangent point.
+  //   Since the new wavefront stays parallel to itself and translates in ray-2 direction, the tangent
+  //   construction still gives sin θ₂ = (n1/n2)·sin(th1) at all constT.
+  //
+  // Easiest: tangent point P = B + r_now * (sin θ₂, cos θ₂), for any constT.
+  if (!p.tir) {
+    const th2 = p.th2;
+    const Px = Bx + r_now * Math.sin(th2);
+    const Py = By + r_now * Math.cos(th2);
+
+    // Endpoint at non-tangent end:
+    let EndX, EndY;
+    if (!A_in_med2) {
+      // For constT ≤ 1: ends at current strike on interface
+      EndX = Bnow_x;
+      EndY = Bnow_y;
+    } else {
+      // For constT > 1: ends at A_now in medium 2
+      EndX = A_now_x;
+      EndY = A_now_y;
+    }
+
+    if (r_now > 0.5) {
+      s += `<line x1="${EndX.toFixed(1)}" y1="${EndY.toFixed(1)}" x2="${Px.toFixed(1)}" y2="${Py.toFixed(1)}" stroke="var(--wave2)" stroke-width="2.4"/>`;
+      s += `<circle cx="${Px.toFixed(1)}" cy="${Py.toFixed(1)}" r="2.5" fill="var(--wave2)"/>`;
+    }
+
+    // Refracted ray, drawn lightly from B continuing in ray-2 direction
+    const rayLenOut = 200;
+    const rayDownX = Bx + rayLenOut * Math.sin(th2);
+    const rayDownY = By + rayLenOut * Math.cos(th2);
+    s += `<line x1="${Bx.toFixed(1)}" y1="${By.toFixed(1)}" x2="${rayDownX.toFixed(1)}" y2="${rayDownY.toFixed(1)}" stroke="var(--ink)" stroke-width="1.4" opacity="0.45" marker-end="url(#rayArrLite)"/>`;
+  }
+
+  // ---------- Triangles overlay (toggle, only at constT = 1 for clarity) ----------
+  // The derivation triangles only make geometric sense at constT = 1 (the textbook moment).
+  // We show them only when state.showTri is on AND constT is close to 1.
+  const showTriangles = state.showTri && !p.tir && Math.abs(state.constT - 1.0) < 0.05;
+  if (showTriangles) {
+    const th2 = p.th2;
+    // Triangle 1 (medium 1 side): B, A0, B'_full — right angle at A0.
+    s += `<polygon points="${Bx.toFixed(1)},${By.toFixed(1)} ${A0x.toFixed(1)},${A0y.toFixed(1)} ${Bpx_full.toFixed(1)},${Bpy.toFixed(1)}" fill="${'var(--wave)'}" fill-opacity="0.07" stroke="var(--wave)" stroke-width="0.8" stroke-dasharray="3 3"/>`;
+    // Right-angle marker at A0
+    {
+      const sz = 8;
+      const ABx = Bx - A0x, ABy = By - A0y; const ABl = Math.hypot(ABx, ABy);
+      const uABx = ABx/ABl, uABy = ABy/ABl;
+      const ABpx = Bpx_full - A0x, ABpy = Bpy - A0y; const ABpl = Math.hypot(ABpx, ABpy);
+      const uABpx = ABpx/ABpl, uABpy = ABpy/ABpl;
+      const cx1 = A0x + sz*uABx, cy1 = A0y + sz*uABy;
+      const cx2 = A0x + sz*uABx + sz*uABpx, cy2 = A0y + sz*uABy + sz*uABpy;
+      const cx3 = A0x + sz*uABpx, cy3 = A0y + sz*uABpy;
+      s += `<polyline points="${cx1.toFixed(1)},${cy1.toFixed(1)} ${cx2.toFixed(1)},${cy2.toFixed(1)} ${cx3.toFixed(1)},${cy3.toFixed(1)}" fill="none" stroke="var(--wave)" stroke-width="0.8"/>`;
+    }
+    // |BA| label
+    {
+      const mx = (A0x + Bx)/2, my = (A0y + By)/2;
+      const perp = { x: -(By - A0y), y: (Bx - A0x) }; const pl = Math.hypot(perp.x, perp.y);
+      const ox = perp.x/pl * 14, oy = perp.y/pl * 14;
+      s += `<text x="${(mx + ox).toFixed(1)}" y="${(my + oy).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--wave)" text-anchor="middle">D</text>`;
+    }
+    // |AB'| label
+    {
+      const mx2 = (A0x + Bpx_full)/2, my2 = (A0y + Bpy)/2;
+      const perp2 = { x: (Bpy - A0y), y: -(Bpx_full - A0x) }; const pl2 = Math.hypot(perp2.x, perp2.y);
+      const ox2 = perp2.x/pl2 * 14, oy2 = perp2.y/pl2 * 14;
+      s += `<text x="${(mx2 + ox2).toFixed(1)}" y="${(my2 + oy2).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--wave)" text-anchor="middle">v₁ Δt</text>`;
+    }
+
+    // Triangle 2 (medium 2 side): B, P_full, B'_full — right angle at P.
+    const Px_full = Bx + r0_full * Math.sin(th2);
+    const Py_full = By + r0_full * Math.cos(th2);
+    s += `<polygon points="${Bx.toFixed(1)},${By.toFixed(1)} ${Px_full.toFixed(1)},${Py_full.toFixed(1)} ${Bpx_full.toFixed(1)},${Bpy.toFixed(1)}" fill="${'var(--wave2)'}" fill-opacity="0.07" stroke="var(--wave2)" stroke-width="0.8" stroke-dasharray="3 3"/>`;
+    // Right-angle marker at P_full
+    {
+      const sz = 8;
+      const PBx = Bx - Px_full, PBy = By - Py_full; const PBl = Math.hypot(PBx, PBy);
+      const uPBx = PBx/PBl, uPBy = PBy/PBl;
+      const PBpx = Bpx_full - Px_full, PBpy = Bpy - Py_full; const PBpl = Math.hypot(PBpx, PBpy);
+      const uPBpx = PBpx/PBpl, uPBpy = PBpy/PBpl;
+      const cx1 = Px_full + sz*uPBx, cy1 = Py_full + sz*uPBy;
+      const cx2 = Px_full + sz*uPBx + sz*uPBpx, cy2 = Py_full + sz*uPBy + sz*uPBpy;
+      const cx3 = Px_full + sz*uPBpx, cy3 = Py_full + sz*uPBpy;
+      s += `<polyline points="${cx1.toFixed(1)},${cy1.toFixed(1)} ${cx2.toFixed(1)},${cy2.toFixed(1)} ${cx3.toFixed(1)},${cy3.toFixed(1)}" fill="none" stroke="var(--wave2)" stroke-width="0.8"/>`;
+    }
+    // |BP| label
+    {
+      const mx = (Bx + Px_full)/2, my = (By + Py_full)/2;
+      const perp = { x: -(Py_full - By), y: (Px_full - Bx) }; const pl = Math.hypot(perp.x, perp.y);
+      const ox = perp.x/pl * 14, oy = perp.y/pl * 14;
+      s += `<text x="${(mx + ox).toFixed(1)}" y="${(my + oy).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--wave2)" text-anchor="middle">v₂ Δt</text>`;
+    }
+    // Hypotenuse label |BB'|
+    {
+      const mx = (Bx + Bpx_full)/2, my = (By + Bpy)/2;
+      s += `<text x="${mx.toFixed(1)}" y="${(my - 8).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--accent)" text-anchor="middle">D / cos θ₁</text>`;
+    }
+
+    // The Snell summary, off to the side
+    const summaryX = W - 280;
+    const summaryY = interfaceY - 150;
+    s += `<text x="${summaryX}" y="${summaryY}" font-family="Cormorant Garamond" font-style="italic" font-size="16" fill="var(--ink)">sin θ₁ = (v₁ Δt) / (D/cos θ₁)</text>`;
+    s += `<text x="${summaryX}" y="${summaryY + 22}" font-family="Cormorant Garamond" font-style="italic" font-size="16" fill="var(--ink)">sin θ₂ = (v₂ Δt) / (D/cos θ₁)</text>`;
+    s += `<line x1="${summaryX}" y1="${summaryY + 32}" x2="${summaryX + 200}" y2="${summaryY + 32}" stroke="var(--ink)" stroke-width="0.8"/>`;
+    s += `<text x="${summaryX}" y="${summaryY + 52}" font-family="Cormorant Garamond" font-style="italic" font-size="16" fill="var(--ink)">sin θ₁ / sin θ₂ = v₁ / v₂ = n₂ / n₁</text>`;
+    s += `<text x="${summaryX}" y="${summaryY + 88}" font-family="Cormorant Garamond" font-style="italic" font-size="20" fill="var(--accent)" font-weight="600">n₁ sin θ₁ = n₂ sin θ₂</text>`;
+  } else if (state.showTri && !p.tir) {
+    // Hint: triangles only shown at constT = 1
+    s += `<text x="${(W - 16).toFixed(1)}" y="${(interfaceY - 100).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--muted)" text-anchor="end">(set time to Δt to see derivation triangles)</text>`;
+  }
+
+  // ---------- Annotations: B, A_now, B' or current strike labels ----------
+  function ptLabel(x, y, label, dx, dy) {
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="var(--ink)"/>`;
+    s += `<text x="${(x + dx).toFixed(1)}" y="${(y + dy).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="15" fill="var(--ink)">${label}</text>`;
+  }
+  ptLabel(Bx, By, 'B', -14, -6);
+  if (!A_in_med2) {
+    ptLabel(A_now_x, A_now_y, 'A', 8, -4);
+  } else {
+    ptLabel(Bpx_full, Bpy, "B′", 8, -6);
+  }
+
+  // ---------- Angle arcs at B ----------
+  const arcR = 50;
+  s += `<path d="M ${Bx} ${By - arcR} A ${arcR} ${arcR} 0 0 0 ${(Bx - arcR*Math.sin(th1)).toFixed(1)} ${(By - arcR*Math.cos(th1)).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.2"/>`;
+  s += `<text x="${(Bx - (arcR + 14)*Math.sin(th1/2)).toFixed(1)}" y="${(By - (arcR + 14)*Math.cos(th1/2)).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="16" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">θ₁</text>`;
+  if (!p.tir) {
+    const th2 = p.th2;
+    s += `<path d="M ${Bx} ${By + arcR} A ${arcR} ${arcR} 0 0 0 ${(Bx + arcR*Math.sin(th2)).toFixed(1)} ${(By + arcR*Math.cos(th2)).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.2"/>`;
+    s += `<text x="${(Bx + (arcR + 14)*Math.sin(th2/2)).toFixed(1)}" y="${(By + (arcR + 14)*Math.cos(th2/2)).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="16" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">θ₂</text>`;
+  }
+
+  // TIR notice
+  if (p.tir) {
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY + 100).toFixed(1)}" font-family="JetBrains Mono" font-size="14" fill="var(--accent)" text-anchor="middle" letter-spacing="2.5">TOTAL INTERNAL REFLECTION</text>`;
+    s += `<text x="${(W/2).toFixed(1)}" y="${(interfaceY + 120).toFixed(1)}" font-family="Cormorant Garamond" font-style="italic" font-size="13" fill="var(--muted)" text-anchor="middle">no tangent line exists; refracted wavefront does not propagate</text>`;
+  }
+
+  document.getElementById('mainSvg').innerHTML = s;
+}
+
+// =========================================================
+// Animation loop
+// =========================================================
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrameMs) / 1000);
+  lastFrameMs = now;
+  if (state.mode === 'anim' && state.playing) {
+    state.t += dt * state.speed;
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+// Init
+setMode('anim');
+render();
+requestAnimationFrame((now) => { lastFrameMs = now; requestAnimationFrame(frame); });
+window.addEventListener('resize', render);
+</script>
+
+</body>
+</html>

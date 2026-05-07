@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Physics — Interactive Demonstrations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1a1a1a;
+    --paper: #faf8f3;
+    --accent: #b8341f;
+    --wave: #2c5f7c;
+    --grid: #d8d2c4;
+    --muted: #6b6459;
+    --rule: #2a2520;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding: 14px 32px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 30px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    top: 4px; left: 32px; right: 32px;
+    height: 1px;
+    background: var(--rule);
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+  }
+
+  main {
+    flex: 1;
+    padding: 40px 32px 60px;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .intro {
+    margin-bottom: 36px;
+    max-width: 640px;
+  }
+  .intro h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+  .intro h2 em { font-style: italic; color: var(--accent); }
+  .intro p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 22px 22px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    min-height: 160px;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 0 var(--rule);
+  }
+  .card::before {
+    content: attr(data-num);
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+  .card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    padding-right: 30px;
+  }
+  .card h3 em { font-style: italic; color: var(--accent); }
+  .card p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+    flex: 1;
+  }
+  .card .arrow {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  /* "Coming soon" cards have a slightly different feel */
+  .card.placeholder {
+    opacity: 0.55;
+    pointer-events: none;
+    border-style: dashed;
+  }
+  .card.placeholder .arrow { color: var(--muted); }
+
+  .signature {
+    position: fixed;
+    right: 14px;
+    bottom: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 12px 20px 10px; flex-direction: column; align-items: flex-start; gap: 6px; }
+    header::before { left: 20px; right: 20px; }
+    main { padding: 28px 20px 50px; }
+    .intro h2 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Wave Physics</h1>
+  <span class="subtitle">Interactive Demonstrations</span>
+</header>
+
+<main>
+  <section class="intro">
+    <h2>A small collection of interactive physics demonstrations.</h2>
+    <p>Each piece is a self-contained simulation exploring a particular phenomenon — refraction, polarization, diffraction, and so on. Pick one to begin.</p>
+  </section>
+
+  <div class="section-label">Demonstrations</div>
+  <div class="grid" id="app-grid"></div>
+</main>
+
+<div class="signature">— wave physics</div>
+
+<script>
+  // =============================================================
+  //  EDIT THIS LIST TO ADD MORE APPS
+  //  Each entry:
+  //    name        — title shown on the card (use <em>...</em> for italic accent)
+  //    path        — folder name in this repo (becomes part of the URL)
+  //    description — short blurb for the card
+  //    placeholder — set to true if not built yet (greys it out, disables click)
+  // =============================================================
+  const apps = [
+    {
+      name: "Snell's Law",
+      path: "Snell",
+      description: "Refraction at an interface. Vary the indices and angle of incidence to see Snell's law."
+    },
+    {
+      name: "Polarization States>",
+      path: "PolarizationStates",
+      description: "Linear, circular, and elliptical polarization visualised as a propagating field and its polarization state."
+    },
+    {
+      name: "Diffraction Phasors",
+      path: "DiffractionPhasers",
+      description: "Single slit diffraction built up from phasor sums. Watch the interference pattern emerge from contributions of each path.",
+      placeholder: true
+    }
+  ];
+
+  const grid = document.getElementById('app-grid');
+  apps.forEach((app, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    const tag = app.placeholder ? 'div' : 'a';
+    const el = document.createElement(tag);
+    el.className = 'card' + (app.placeholder ? ' placeholder' : '');
+    el.setAttribute('data-num', num);
+    if (!app.placeholder) {
+      el.href = app.path + '/';
+    }
+    el.innerHTML = `
+      <h3>${app.name}</h3>
+      <p>${app.description}</p>
+      <span class="arrow">${app.placeholder ? 'Coming soon' : 'Open →'}</span>
+    `;
+    grid.appendChild(el);
+  });
+</script>
+
+</body>
+</html>

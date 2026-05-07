@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Birefringent Slab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1a1a1a;
+    --paper: #faf8f3;
+    --accent: #b8341f;
+    --wave: #2c5f7c;
+    --warm: #d97420;
+    --good: #2f9e44;
+    --grid: #d8d2c4;
+    --muted: #6b6459;
+    --rule: #2a2520;
+
+    /* Field colors, matching the polarization-states app */
+    --fx: #2c5f7c;
+    --fy: #d97420;
+    --total: #2f9e44;
+    --slab: #6b6459;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding: 14px 32px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 30px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    top: 4px; left: 32px; right: 32px;
+    height: 1px;
+    background: var(--rule);
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 32px 28px;
+    max-width: 1700px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 18px;
+    min-height: 0;
+  }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 18px 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-label {
+    position: absolute;
+    top: -9px;
+    left: 18px;
+    background: var(--bg);
+    padding: 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  #three { width: 100%; height: 480px; display: block; }
+  #three canvas { display: block; }
+  #ellipse { width: 100%; height: 480px; background: transparent; display: block; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 3px; flex-shrink: 0; }
+
+  .play-pill { margin-left: auto; }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px 24px;
+  }
+  .control { display: flex; flex-direction: column; gap: 4px; }
+  .slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+  .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--rule);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+
+  button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 7px 12px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button.active { background: var(--ink); color: var(--paper); }
+  .play-btn {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .play-btn:hover { background: var(--accent); color: var(--paper); }
+
+  /* Stat cards */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .stat {
+    border: 1px solid var(--grid);
+    background: var(--bg);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat .v {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink);
+  }
+  .stat .v.accent { color: var(--accent); }
+
+  .signature {
+    position: fixed;
+    right: 14px;
+    bottom: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1100px) {
+    .top-row { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Birefringent Slab</h1>
+ 
+</header>
+
+<main>
+
+  <div class="top-row">
+
+    <div class="panel">
+      <span class="panel-label">Wave Propagation Through the Slab</span>
+      <div class="legend">
+        <div class="legend-item"><div class="swatch" style="background: var(--fx);"></div>Eₓ along x</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--fy);"></div>Eᵧ along y</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--total);"></div>Total E (probes + input ellipse)</div>
+        <div class="legend-item"><div class="swatch" style="background: var(--slab); opacity: 0.5;"></div>Slab</div>
+        <button id="toggleAnim" class="play-btn play-pill">Play</button>
+      </div>
+      <div id="three"></div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">Polarization State (After Slab)</span>
+      <svg id="ellipse" viewBox="-1.25 -1.25 2.5 2.5" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <span class="panel-label">Controls</span>
+
+    <div class="controls-grid">
+
+      <div class="control">
+        <div class="slider-row"><label>Wavelength λ₀ (nm)</label><span class="value" id="outLambda">494</span></div>
+        <input id="lambda" type="range" min="350" max="1000" step="1" value="494">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Thickness d (µm)</label><span class="value" id="outD">1.000</span></div>
+        <input id="d" type="range" min="0" max="3" step="0.001" value="1.000">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Index nₓ (for Eₓ)</label><span class="value" id="outNx">1.0000</span></div>
+        <input id="nx" type="range" min="1.00" max="2.00" step="0.0005" value="1.0000">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Index nᵧ (for Eᵧ)</label><span class="value" id="outNy">1.0000</span></div>
+        <input id="ny" type="range" min="1.00" max="2.00" step="0.0005" value="1.0000">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Amplitude Aₓ</label><span class="value" id="outAx">1.00</span></div>
+        <input id="Ax" type="range" min="0" max="1.5" step="0.01" value="1.00">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Amplitude Aᵧ</label><span class="value" id="outAy">1.00</span></div>
+        <input id="Ay" type="range" min="0" max="1.5" step="0.01" value="1.00">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Initial phase δ₀ (rad)</label><span class="value" id="outDelta0">0.000</span></div>
+        <input id="delta0" type="range" min="-3.14159" max="3.14159" step="0.001" value="0">
+      </div>
+
+      <div class="control">
+        <div class="slider-row"><label>Time phase ωt (rad)</label><span class="value" id="outT">2.500</span></div>
+        <input id="t" type="range" min="0" max="6.283185307179586" step="0.001" value="2.5">
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="panel-label">Phase Retardation</span>
+    <div class="stats">
+      <div class="stat"><div class="k">Δ before slab (rad)</div><div class="v" id="statBefore">0.000</div></div>
+      <div class="stat"><div class="k">Δ added by slab (rad)</div><div class="v accent" id="statAdded">0.000</div></div>
+      <div class="stat"><div class="k">Δ after slab (rad)</div><div class="v" id="statAfter">0.000</div></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="signature">RM</div>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  const TAU = Math.PI * 2;
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  // ---- Fixed scene scale: 1 scene unit = 1 µm ----
+  const UM_PER_UNIT = 1.0;
+  const M_PER_UNIT = UM_PER_UNIT * 1e-6;
+
+  // Geometry anchors (scene units)
+  const zMin = 0;
+  const beforeLen = 2.2;
+  const plateStart = beforeLen;
+  const afterLen = 2.2;
+  const probeBeforeX = 0;
+
+  // Read CSS palette so the THREE scene tracks the page theme
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = {
+    bg:    cssVar('--paper') || '#faf8f3',
+    ink:   cssVar('--ink')   || '#1a1a1a',
+    muted: cssVar('--muted') || '#6b6459',
+    grid:  cssVar('--grid')  || '#d8d2c4',
+    fx:    cssVar('--fx')    || '#2c5f7c',
+    fy:    cssVar('--fy')    || '#d97420',
+    total: cssVar('--total') || '#2f9e44',
+    slab:  cssVar('--slab')  || '#6b6459',
+    accent:cssVar('--accent')|| '#b8341f',
+  };
+  const hexNum = h => parseInt(h.replace('#',''),16);
+  const hexToRGB = (h) => {
+    const v = hexNum(h);
+    return { r: ((v>>16)&0xff)/255, g: ((v>>8)&0xff)/255, b: (v&0xff)/255 };
+  };
+
+  // DOM
+  const elThree = document.getElementById('three');
+  const svg = document.getElementById('ellipse');
+  const statBefore = document.getElementById('statBefore');
+  const statAdded  = document.getElementById('statAdded');
+  const statAfter  = document.getElementById('statAfter');
+
+  const inputs = {
+    lambda: document.getElementById('lambda'),
+    d:      document.getElementById('d'),
+    nx:     document.getElementById('nx'),
+    ny:     document.getElementById('ny'),
+    Ax:     document.getElementById('Ax'),
+    Ay:     document.getElementById('Ay'),
+    delta0: document.getElementById('delta0'),
+    t:      document.getElementById('t'),
+  };
+  const outs = {
+    lambda: document.getElementById('outLambda'),
+    d:      document.getElementById('outD'),
+    nx:     document.getElementById('outNx'),
+    ny:     document.getElementById('outNy'),
+    Ax:     document.getElementById('outAx'),
+    Ay:     document.getElementById('outAy'),
+    delta0: document.getElementById('outDelta0'),
+    t:      document.getElementById('outT'),
+  };
+
+  let state = {
+    lambdaNm: +inputs.lambda.value,
+    dUm:      +inputs.d.value,
+    nx:       +inputs.nx.value,
+    ny:       +inputs.ny.value,
+    Ax:       +inputs.Ax.value,
+    Ay:       +inputs.Ay.value,
+    delta0:   +inputs.delta0.value,
+    wt:       +inputs.t.value,
+    anim: false,
+  };
+
+  // ============================================================
+  // 3D scene
+  // ============================================================
+  // Axis convention (matching the polarization-states app):
+  //   3D x  → propagation z (going right, length zMax-zMin)
+  //   3D y  → Eᵧ field axis (going UP)
+  //   3D z  → Eₓ field axis, but pointing INTO screen — we plot at 3D-z = -Eₓ
+  // So to plot a point with field components (Eₓ, Eᵧ) at scene-x = X, we use
+  //   point3D = (X, Eᵧ, -Eₓ)
+  // The Eₓ wave thus lives in the x-z plane (y=0); the Eᵧ wave in the x-y plane (z=0).
+
+  const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setSize(elThree.clientWidth, elThree.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(hexNum(COL.bg.replace('#','')), 1);
+  elThree.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(hexNum(COL.bg.replace('#','')));
+
+  const camera = new THREE.PerspectiveCamera(40, elThree.clientWidth / elThree.clientHeight, 0.1, 100);
+  camera.position.set(7.5, 4.2, 6.2);
+  camera.lookAt(2.8, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+  const dirL = new THREE.DirectionalLight(0xffffff, 0.4);
+  dirL.position.set(5, 6, 7);
+  scene.add(dirL);
+
+  function mkAxis(from, to, color) {
+    const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...from), new THREE.Vector3(...to)]);
+    return new THREE.Line(geom, new THREE.LineBasicMaterial({ color }));
+  }
+  function mkSpriteLabel(text, pos, color, size = 0.5) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.fillStyle = color;
+    ctx.font = "italic 110px 'Cormorant Garamond', Georgia, serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 128);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const spr = new THREE.Sprite(mat);
+    spr.scale.set(size, size, size);
+    spr.position.set(...pos);
+    return spr;
+  }
+  function addCrossAt(xPos) {
+    const L = 1.25;
+    const mat = new THREE.LineBasicMaterial({ color: hexNum(COL.ink.replace('#','')), transparent: true, opacity: 0.6 });
+    // Cross with two perpendicular lines in the y-z plane
+    const pts = [
+      new THREE.Vector3(xPos, -L, 0), new THREE.Vector3(xPos, +L, 0),
+      new THREE.Vector3(xPos, 0, -L), new THREE.Vector3(xPos, 0, +L),
+    ];
+    const geom = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineSegments(geom, mat);
+  }
+
+  // Wave curves: Eₓ wave (lives in the x-(-z) plane, with positive Eₓ going into the screen)
+  const nCurve = 1200;
+  const exGeom = new THREE.BufferGeometry();
+  const eyGeom = new THREE.BufferGeometry();
+  const exPos = new Float32Array(nCurve * 3);
+  const eyPos = new Float32Array(nCurve * 3);
+  const exCol = new Float32Array(nCurve * 3);
+  const eyCol = new Float32Array(nCurve * 3);
+  exGeom.setAttribute('position', new THREE.BufferAttribute(exPos, 3));
+  eyGeom.setAttribute('position', new THREE.BufferAttribute(eyPos, 3));
+  exGeom.setAttribute('color',    new THREE.BufferAttribute(exCol, 3));
+  eyGeom.setAttribute('color',    new THREE.BufferAttribute(eyCol, 3));
+  const exLine = new THREE.Line(exGeom, new THREE.LineBasicMaterial({ vertexColors: true }));
+  const eyLine = new THREE.Line(eyGeom, new THREE.LineBasicMaterial({ vertexColors: true }));
+  scene.add(exLine, eyLine);
+
+  // Probes (total-E vectors at sample points, in the y-z plane)
+  const probeBefore = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), 1, hexNum(COL.total.replace('#','')), 0.12, 0.07);
+  const probeAfter  = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), 1, hexNum(COL.total.replace('#','')), 0.12, 0.07);
+  scene.add(probeBefore, probeAfter);
+
+  // 3D input ellipse at origin (in the y-z plane)
+  const nEll = 240;
+  const ellGeom = new THREE.BufferGeometry();
+  const ellPos = new Float32Array(nEll * 3);
+  ellGeom.setAttribute('position', new THREE.BufferAttribute(ellPos, 3));
+  const ellLine = new THREE.LineLoop(ellGeom, new THREE.LineBasicMaterial({ color: hexNum(COL.total.replace('#','')), transparent: true, opacity: 0.85 }));
+  scene.add(ellLine);
+
+  // Items that depend on slab thickness
+  let axisX = null, axisY = null, axisZ = null;
+  let slab = null, slabEdges = null, crossIn = null, crossOut = null;
+  let labelZ = null, labelEx = null, labelEy = null;
+
+  function rebuildStatic() {
+    [axisX, axisY, axisZ, slab, slabEdges, crossIn, crossOut, labelZ, labelEx, labelEy].forEach(o => { if (o) scene.remove(o); });
+
+    const plateLen = state.dUm / UM_PER_UNIT;
+    const plateEnd = plateStart + plateLen;
+    const zMax = plateEnd + afterLen;
+
+    // Propagation (z) axis — drawn in dark ink
+    axisX = mkAxis([zMin, 0, 0], [zMax, 0, 0], hexNum(COL.ink.replace('#','')));
+    // Eᵧ axis — 3D y, going UP, drawn in --fy (orange)
+    axisY = mkAxis([zMin, 0, 0], [zMin, 1.4, 0], hexNum(COL.fy.replace('#','')));
+    // Eₓ axis — 3D z but in NEGATIVE direction (into screen), drawn in --fx (blue)
+    axisZ = mkAxis([zMin, 0, 0], [zMin, 0, -1.4], hexNum(COL.fx.replace('#','')));
+    scene.add(axisX, axisY, axisZ);
+
+    // Axis labels
+    labelZ  = mkSpriteLabel('z',  [zMax + 0.4, 0, 0], COL.ink, 0.55);
+    labelEy = mkSpriteLabel('Eᵧ', [zMin, 1.65, 0], COL.fy, 0.65);
+    labelEx = mkSpriteLabel('Eₓ', [zMin, 0, -1.65], COL.fx, 0.65);
+    scene.add(labelZ, labelEy, labelEx);
+
+    // Slab box (only drawn when d > 0)
+    if (plateLen > 1e-6) {
+      const slabGeom = new THREE.BoxGeometry(plateLen, 2.8, 2.8);
+      const slabMat = new THREE.MeshBasicMaterial({ color: hexNum(COL.slab.replace('#','')), transparent: true, opacity: 0.10 });
+      slab = new THREE.Mesh(slabGeom, slabMat);
+      slab.position.set((plateStart + plateEnd) / 2, 0, 0);
+      scene.add(slab);
+
+      const edges = new THREE.EdgesGeometry(slabGeom, 25);
+      slabEdges = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: hexNum(COL.ink.replace('#','')), transparent: true, opacity: 0.45 }));
+      slabEdges.position.copy(slab.position);
+      scene.add(slabEdges);
+
+      crossIn  = addCrossAt(plateStart);
+      crossOut = addCrossAt(plateEnd);
+      scene.add(crossIn, crossOut);
+    } else {
+      slab = slabEdges = crossIn = crossOut = null;
+    }
+
+    // Probe positions
+    probeBefore.position.set(probeBeforeX, 0, 0);
+    probeAfter.position.set(plateEnd + 0.55, 0, 0);
+
+    return { plateLen, plateEnd, zMax };
+  }
+
+  // ============================================================
+  // SVG ellipse (after-slab polarization state, in standard 2D Eₓ-vs-Eᵧ orientation)
+  // ============================================================
+  function buildSVG() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const grid = document.createElementNS(svgNS, 'g');
+    grid.setAttribute('stroke', COL.grid);
+    grid.setAttribute('stroke-width', '0.005');
+    svg.appendChild(grid);
+
+    const axes2 = document.createElementNS(svgNS, 'g');
+    axes2.setAttribute('stroke', COL.ink);
+    axes2.setAttribute('stroke-width', '0.012');
+    axes2.setAttribute('opacity', '0.5');
+    svg.appendChild(axes2);
+
+    const S = 1.15;
+    for (let i = -Math.floor(S * 5); i <= Math.floor(S * 5); i++) {
+      const x = i / 5;
+      const lv = document.createElementNS(svgNS, 'line');
+      lv.setAttribute('x1', x); lv.setAttribute('y1', -S);
+      lv.setAttribute('x2', x); lv.setAttribute('y2',  S);
+      grid.appendChild(lv);
+      const lh = document.createElementNS(svgNS, 'line');
+      lh.setAttribute('x1', -S); lh.setAttribute('y1', x);
+      lh.setAttribute('x2',  S); lh.setAttribute('y2', x);
+      grid.appendChild(lh);
+    }
+
+    const xAxis = document.createElementNS(svgNS, 'line');
+    xAxis.setAttribute('x1', -S); xAxis.setAttribute('y1', 0);
+    xAxis.setAttribute('x2',  S); xAxis.setAttribute('y2', 0);
+    axes2.appendChild(xAxis);
+    const yAxis = document.createElementNS(svgNS, 'line');
+    yAxis.setAttribute('x1', 0); yAxis.setAttribute('y1', -S);
+    yAxis.setAttribute('x2', 0); yAxis.setAttribute('y2',  S);
+    axes2.appendChild(yAxis);
+
+    // Axis labels
+    const tx = document.createElementNS(svgNS, 'text');
+    tx.setAttribute('x', S - 0.08);
+    tx.setAttribute('y', -0.06);
+    tx.setAttribute('fill', COL.fx);
+    tx.setAttribute('font-size', '0.13');
+    tx.setAttribute('font-style', 'italic');
+    tx.setAttribute('font-family', "'Cormorant Garamond', serif");
+    tx.setAttribute('text-anchor', 'end');
+    tx.textContent = 'Eₓ';
+    axes2.appendChild(tx);
+
+    const ty = document.createElementNS(svgNS, 'text');
+    ty.setAttribute('x', 0.06);
+    ty.setAttribute('y', -(S - 0.08));
+    ty.setAttribute('fill', COL.fy);
+    ty.setAttribute('font-size', '0.13');
+    ty.setAttribute('font-style', 'italic');
+    ty.setAttribute('font-family', "'Cormorant Garamond', serif");
+    ty.textContent = 'Eᵧ';
+    axes2.appendChild(ty);
+
+    // Polarization locus (dashed, ink)
+    const ellipsePath = document.createElementNS(svgNS, 'path');
+    ellipsePath.setAttribute('fill', 'none');
+    ellipsePath.setAttribute('stroke', COL.ink);
+    ellipsePath.setAttribute('stroke-width', '0.013');
+    ellipsePath.setAttribute('stroke-linejoin', 'round');
+    ellipsePath.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(ellipsePath);
+
+    // After-slab probe vector (total color)
+    const afterVec = document.createElementNS(svgNS, 'line');
+    afterVec.setAttribute('stroke', COL.total);
+    afterVec.setAttribute('stroke-width', '0.035');
+    afterVec.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(afterVec);
+
+    const afterDot = document.createElementNS(svgNS, 'circle');
+    afterDot.setAttribute('r', '0.04');
+    afterDot.setAttribute('fill', COL.total);
+    svg.appendChild(afterDot);
+
+    return { ellipsePath, afterVec, afterDot };
+  }
+  const svgRefs = buildSVG();
+
+  function update2DEllipseAfter(Ax, Ay, deltaAfter) {
+    const N = 420;
+    let d = '';
+    for (let i = 0; i <= N; i++) {
+      const u = i * (TAU / N);
+      const x = Ax * Math.cos(u);
+      const y = Ay * Math.cos(u + deltaAfter);
+      d += (i ? 'L' : 'M') + x + ',' + (-y) + ' ';
+    }
+    svgRefs.ellipsePath.setAttribute('d', d.trim());
+
+    const u = state.wt;
+    const tx = Ax * Math.cos(u);
+    const ty = Ay * Math.cos(u + deltaAfter);
+    svgRefs.afterVec.setAttribute('x1', 0);
+    svgRefs.afterVec.setAttribute('y1', 0);
+    svgRefs.afterVec.setAttribute('x2', tx);
+    svgRefs.afterVec.setAttribute('y2', -ty);
+    svgRefs.afterDot.setAttribute('cx', tx);
+    svgRefs.afterDot.setAttribute('cy', -ty);
+  }
+
+  // ============================================================
+  // Main update
+  // ============================================================
+  let geom = rebuildStatic();
+
+  function update() {
+    const lambda0_m = state.lambdaNm * 1e-9;
+    const k0 = TAU / lambda0_m;
+    const d_m = state.dUm * 1e-6;
+
+    const deltaBefore = state.delta0;
+    const deltaAdded  = k0 * (state.ny - state.nx) * d_m;
+    const deltaAfter  = state.delta0 + deltaAdded;
+
+    statBefore.textContent = deltaBefore.toFixed(3);
+    statAdded.textContent  = deltaAdded.toFixed(3);
+    statAfter.textContent  = deltaAfter.toFixed(3);
+
+    // Rebuild static geometry if thickness changed
+    const wantPlateLen = state.dUm / UM_PER_UNIT;
+    if (Math.abs(wantPlateLen - geom.plateLen) > 1e-12) {
+      geom = rebuildStatic();
+    }
+    const plateEnd = geom.plateEnd;
+
+    // Color components — outside slab and inside (same family but a bit darker/lighter)
+    const exOut = hexToRGB(COL.fx);
+    const eyOut = hexToRGB(COL.fy);
+    // Slightly shifted inside-slab tints (a bit lighter / more saturated)
+    const exIn  = { r: 0.35, g: 0.78, b: 1.00 };   // lighter blue
+    const eyIn  = { r: 1.00, g: 0.62, b: 0.40 };   // lighter orange
+
+    const zStart_m = plateStart * M_PER_UNIT;
+    const zEnd_m   = plateEnd   * M_PER_UNIT;
+    const zMax = geom.zMax;
+
+    for (let i = 0; i < nCurve; i++) {
+      const x = zMin + (zMax - zMin) * (i / (nCurve - 1));
+      const z_m = x * M_PER_UNIT;
+
+      const inside = (x >= plateStart && x <= plateEnd);
+      const cex = inside ? exIn : exOut;
+      const cey = inside ? eyIn : eyOut;
+      exCol[3*i+0] = cex.r; exCol[3*i+1] = cex.g; exCol[3*i+2] = cex.b;
+      eyCol[3*i+0] = cey.r; eyCol[3*i+1] = cey.g; eyCol[3*i+2] = cey.b;
+
+      // Phase by region
+      let phx, phy;
+      if (x < plateStart) {
+        phx = k0 * z_m;
+        phy = k0 * z_m + state.delta0;
+      } else if (inside) {
+        const zPrime = z_m - zStart_m;
+        phx = k0 * zStart_m + k0 * state.nx * zPrime;
+        phy = k0 * zStart_m + k0 * state.ny * zPrime + state.delta0;
+      } else {
+        const zAfter = z_m - zEnd_m;
+        phx = k0 * zStart_m + k0 * state.nx * d_m + k0 * zAfter;
+        phy = k0 * zStart_m + k0 * state.ny * d_m + k0 * zAfter + state.delta0;
+      }
+
+      const ex = state.Ax * Math.cos(phx - state.wt);
+      const ey = state.Ay * Math.cos(phy - state.wt);
+
+      // Plot Eₓ wave in the (x, -z) plane: 3D y = 0, 3D z = -ex
+      exPos[3*i+0] = x;
+      exPos[3*i+1] = 0;
+      exPos[3*i+2] = -ex;
+
+      // Plot Eᵧ wave in the (x, y) plane: 3D y = ey, 3D z = 0
+      eyPos[3*i+0] = x;
+      eyPos[3*i+1] = ey;
+      eyPos[3*i+2] = 0;
+    }
+
+    exGeom.attributes.position.needsUpdate = true;
+    eyGeom.attributes.position.needsUpdate = true;
+    exGeom.attributes.color.needsUpdate    = true;
+    eyGeom.attributes.color.needsUpdate    = true;
+
+    // Probes
+    function sampleAtX(xProbe) {
+      const z_m = xProbe * M_PER_UNIT;
+      let phx, phy;
+      if (xProbe < plateStart) {
+        phx = k0 * z_m;
+        phy = k0 * z_m + state.delta0;
+      } else if (xProbe <= plateEnd) {
+        const zPrime = z_m - zStart_m;
+        phx = k0 * zStart_m + k0 * state.nx * zPrime;
+        phy = k0 * zStart_m + k0 * state.ny * zPrime + state.delta0;
+      } else {
+        const zAfter = z_m - zEnd_m;
+        phx = k0 * zStart_m + k0 * state.nx * d_m + k0 * zAfter;
+        phy = k0 * zStart_m + k0 * state.ny * d_m + k0 * zAfter + state.delta0;
+      }
+      return { ex: state.Ax * Math.cos(phx - state.wt), ey: state.Ay * Math.cos(phy - state.wt) };
+    }
+
+    const sB = sampleAtX(0);
+    const sA = sampleAtX(probeAfter.position.x);
+
+    function setArrow(arrow, xPos, ex, ey) {
+      arrow.position.set(xPos, 0, 0);
+      // Total-E vector lives in the (y, -z) plane: direction (0, ey, -ex)
+      const v = new THREE.Vector3(0, ey, -ex);
+      const len = v.length() || 1;
+      arrow.setDirection(v.clone().normalize());
+      arrow.setLength(len, 0.12, 0.07);
+    }
+    setArrow(probeBefore, 0, sB.ex, sB.ey);
+    setArrow(probeAfter, probeAfter.position.x, sA.ex, sA.ey);
+
+    // Input polarization ellipse at origin (using deltaBefore), in (y, -z) plane
+    for (let i = 0; i < nEll; i++) {
+      const u = i * (TAU / nEll);
+      const ex = state.Ax * Math.cos(u);
+      const ey = state.Ay * Math.cos(u + deltaBefore);
+      ellPos[3*i+0] = 0;
+      ellPos[3*i+1] = ey;     // 3D y = Eᵧ
+      ellPos[3*i+2] = -ex;    // 3D z = -Eₓ
+    }
+    ellGeom.attributes.position.needsUpdate = true;
+
+    // 2D after-slab ellipse plot (right panel)
+    update2DEllipseAfter(state.Ax, state.Ay, deltaAfter);
+
+    renderer.render(scene, camera);
+  }
+
+  function setOuts() {
+    outs.lambda.textContent = String(state.lambdaNm);
+    outs.d.textContent      = state.dUm.toFixed(3);
+    outs.nx.textContent     = state.nx.toFixed(4);
+    outs.ny.textContent     = state.ny.toFixed(4);
+    outs.Ax.textContent     = state.Ax.toFixed(2);
+    outs.Ay.textContent     = state.Ay.toFixed(2);
+    outs.delta0.textContent = state.delta0.toFixed(3);
+    outs.t.textContent      = state.wt.toFixed(3);
+  }
+
+  Object.entries(inputs).forEach(([k, el]) => {
+    el.addEventListener('input', () => {
+      if (k === 'lambda') state.lambdaNm = +el.value;
+      if (k === 'd')      state.dUm      = +el.value;
+      if (k === 'nx')     state.nx       = +el.value;
+      if (k === 'ny')     state.ny       = +el.value;
+      if (k === 'Ax')     state.Ax       = +el.value;
+      if (k === 'Ay')     state.Ay       = +el.value;
+      if (k === 'delta0') state.delta0   = +el.value;
+      if (k === 't')      state.wt       = +el.value;
+      setOuts();
+      update();
+    });
+  });
+
+  // Animation
+  let raf = null;
+  const btn = document.getElementById('toggleAnim');
+  function loop() {
+    state.wt = (state.wt + 0.03) % TAU;
+    inputs.t.value = state.wt;
+    outs.t.textContent = state.wt.toFixed(3);
+    update();
+    raf = requestAnimationFrame(loop);
+  }
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.anim = !state.anim;
+    btn.textContent = state.anim ? 'Pause' : 'Play';
+    btn.classList.toggle('active', state.anim);
+    if (state.anim) loop();
+    else { cancelAnimationFrame(raf); raf = null; }
+  });
+
+  window.addEventListener('resize', () => {
+    const w = elThree.clientWidth, h = elThree.clientHeight;
+    if (w === 0 || h === 0) return;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    update();
+  });
+
+  // Init
+  setOuts();
+  geom = rebuildStatic();
+  // Wait one frame so layout settles
+  requestAnimationFrame(() => {
+    const w = elThree.clientWidth, h = elThree.clientHeight;
+    if (w > 0 && h > 0) {
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    update();
+  });
+})();
+</script>
+</body>
+</html>

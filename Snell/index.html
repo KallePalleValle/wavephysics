@@ -161,6 +161,17 @@
     align-items: baseline;
     margin-bottom: 6px;
   }
+  /* Individual slider frame — visually separates each parameter so it's clear which
+     value belongs to which slider. */
+  .param-item {
+    border: 1px solid var(--grid);
+    background: var(--bg);
+    padding: 8px 10px 6px;
+    margin-bottom: 8px;
+  }
+  .param-item:last-child { margin-bottom: 0; }
+  .param-item .slider-row { margin-bottom: 4px; }
+  .param-item input[type="range"] { margin-bottom: 0; }
   input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
@@ -292,29 +303,37 @@
     <div class="control-group">
       <h3>Parameters</h3>
 
-      <div class="slider-row">
-        <label>Index <span style="text-transform:none; letter-spacing:0;">n₁</span></label>
-        <span class="value" id="n1Val">1.00</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Index <span style="text-transform:none; letter-spacing:0;">n₁</span></label>
+          <span class="value" id="n1Val">1.00</span>
+        </div>
+        <input type="range" id="n1Slider" min="1.00" max="2.50" step="0.01" value="1.00">
       </div>
-      <input type="range" id="n1Slider" min="1.00" max="2.50" step="0.01" value="1.00">
 
-      <div class="slider-row">
-        <label>Index <span style="text-transform:none; letter-spacing:0;">n₂</span></label>
-        <span class="value" id="n2Val">1.50</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Index <span style="text-transform:none; letter-spacing:0;">n₂</span></label>
+          <span class="value" id="n2Val">1.50</span>
+        </div>
+        <input type="range" id="n2Slider" min="1.00" max="2.50" step="0.01" value="1.50">
       </div>
-      <input type="range" id="n2Slider" min="1.00" max="2.50" step="0.01" value="1.50">
 
-      <div class="slider-row">
-        <label>Angle <span style="text-transform:none; letter-spacing:0;">θ₁ (deg)</span></label>
-        <span class="value" id="angVal">35°</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Angle <span style="text-transform:none; letter-spacing:0;">θ₁ (deg)</span></label>
+          <span class="value" id="angVal">35°</span>
+        </div>
+        <input type="range" id="angSlider" min="0" max="85" step="0.5" value="35">
       </div>
-      <input type="range" id="angSlider" min="0" max="85" step="0.5" value="35">
 
-      <div class="slider-row">
-        <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
-        <span class="value" id="lamVal">60</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
+          <span class="value" id="lamVal">60</span>
+        </div>
+        <input type="range" id="lamSlider" min="30" max="120" step="1" value="60">
       </div>
-      <input type="range" id="lamSlider" min="30" max="120" step="1" value="60">
     </div>
 
     <div class="control-group" id="animControls">
@@ -323,20 +342,24 @@
         <button id="playBtn" class="active">Pause</button>
         <button id="resetBtn">Reset</button>
       </div>
-      <div class="slider-row" style="margin-top: 10px;">
-        <label>Speed</label>
-        <span class="value" id="speedVal">1.0×</span>
+      <div class="param-item" style="margin-top: 10px;">
+        <div class="slider-row">
+          <label>Speed</label>
+          <span class="value" id="speedVal">1.0×</span>
+        </div>
+        <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
       </div>
-      <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
     </div>
 
     <div class="control-group" id="constControls" style="display:none">
       <h3>Time</h3>
-      <div class="slider-row">
-        <label>Scrub time <span style="text-transform:none; letter-spacing:0;">t</span></label>
-        <span class="value" id="constTimeVal">Δt</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Scrub time <span style="text-transform:none; letter-spacing:0;">t</span></label>
+          <span class="value" id="constTimeVal">Δt</span>
+        </div>
+        <input type="range" id="constTimeSlider" min="0" max="2" step="0.01" value="1">
       </div>
-      <input type="range" id="constTimeSlider" min="0" max="2" step="0.01" value="1">
     </div>
 
     <div class="control-group">

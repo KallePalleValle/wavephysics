@@ -20,7 +20,7 @@
   html, body {
     background: var(--bg);
     color: var(--ink);
-    font-family: Arial, Helvetica, sans-serif;
+	font-family: Arial, Helvetica, sans-serif;
     height: 100vh;
     overflow: hidden;
     background-image:
@@ -46,7 +46,7 @@
     background: var(--rule);
   }
   h1 {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 26px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -90,7 +90,7 @@
     left: 18px;
     background: var(--bg);
     padding: 0 10px;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -121,7 +121,7 @@
     padding: 14px 18px;
   }
   .control-group h3 {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 10px;
@@ -130,7 +130,7 @@
   }
   label {
     display: block;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -138,7 +138,7 @@
     margin-bottom: 6px;
   }
   .value {
-    font-family: Consolas, "Courier New", monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     color: var(--accent);
     font-weight: 500;
@@ -180,7 +180,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -194,7 +194,7 @@
     position: fixed;
     right: 14px;
     bottom: 8px;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-size: 12px;
     color: var(--muted);
@@ -220,7 +220,6 @@
       </div>
       <div class="legend">
         <div class="legend-item"><div class="swatch" style="background: var(--wave);"></div>Incident wavefront</div>
-        <div class="legend-item"><div class="swatch" style="background: var(--accent);"></div>Slit aperture (b)</div>
         <div class="legend-item"><div class="swatch" style="background: var(--ink);"></div>Diffracted ray (θ)</div>
         <div class="legend-item"><div class="swatch" style="background: var(--accent); opacity: 0.35;"></div>I(θ)/I₀</div>
       </div>
@@ -266,7 +265,7 @@
   </aside>
 </main>
 
-<div class="signature">RM</div>
+<div class="signature">by RM</div>
 
 <script>
 const state = { b: 4.0, N: 5, theta: 0.0 };
@@ -339,8 +338,8 @@ function drawWaveAndIntensity(p) {
   </defs>`;
   s += `<rect width="${W}" height="${H}" fill="url(#gridp)"/>`;
 
-  const lamPx = 38;
-  const nWaves = 4;
+  const lamPx = 16;
+  const nWaves = 8;
   const firstX = slitX - nWaves * lamPx - 20;
   for (let i = 0; i < nWaves; i++) {
     const x = firstX + i * lamPx;
@@ -363,11 +362,6 @@ function drawWaveAndIntensity(p) {
   for (let y = botSlit + 4; y < H - 30; y += 9) {
     s += `<line x1="${slitX - 14}" y1="${y + 7}" x2="${slitX - 6}" y2="${y}" stroke="var(--ink)" stroke-width="0.8"/>`;
   }
-
-  s += `<line x1="${slitX - 30}" y1="${topSlit}" x2="${slitX - 30}" y2="${botSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
-  s += `<line x1="${slitX - 34}" y1="${topSlit}" x2="${slitX - 26}" y2="${topSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
-  s += `<line x1="${slitX - 34}" y1="${botSlit}" x2="${slitX - 26}" y2="${botSlit}" stroke="var(--accent)" stroke-width="1.2"/>`;
-  s += `<text x="${slitX - 40}" y="${cy + 5}" font-family="Cormorant Garamond" font-style="italic" font-size="18" fill="var(--accent)" text-anchor="end">b = ${state.b.toFixed(1)}λ</text>`;
 
   const nVis = Math.min(state.N, 40);
   for (let i = 0; i < nVis; i++) {
@@ -510,20 +504,20 @@ function drawPhasors(p) {
   // All ray/wavefront drawing uses thRadVis; the actual physical phase (via p.amp) is unchanged.
   const thRadVis = -thRad;
 
-  // With rays going up-right (for positive θ), the wavefront is anchored at the TOP dial
-  // (center of the 1st of M strips) and extends toward where the lower dials' rays will cross it.
-  // That direction is perpendicular to the rays and points "down-right" on screen:
-  //   perpDir = (-sin(θv), cos(θv))   (rotated 90° CW from ray direction)
-  // For θv<0 (rays up-right), this gives (+,+) — toward the lower-right, matching the pattern
-  // of where lower sources' rays cross the wavefront plane.
+  // With rays going up-right (for positive θ), the wavefront is anchored at the TOPMOST
+  // SOURCE (frac = 0.5/N) — NOT at the top dial. This is the correct phase reference: the
+  // first sine-line source's ray crosses the wavefront at distance zero, so phasor 0 reads 0°.
+  // When N > M, the topmost source sits ABOVE the top dial, and the dial therefore reads a
+  // non-zero phase corresponding to the dial's vertical offset below the topmost source.
+  const refFrac = 0.5 / state.N;       // fractional position of the topmost (and reference) source
   const topDialFrac = 0.5 / M;
   const wfAnchorX = slitCx;
-  const wfAnchorY = slitTopY + topDialFrac * slitMagHeight;
+  const wfAnchorY = slitTopY + refFrac * slitMagHeight;
   const perpDx = -Math.sin(thRadVis);
   const perpDy = Math.cos(thRadVis);
 
-  // Reference wavefront — extends from the top dial toward the lower-ray-crossing region.
-  const wfLen = (1 - 2 * topDialFrac) * slitMagHeight + 20;
+  // Reference wavefront — extends from the topmost source toward the lower-ray-crossing region.
+  const wfLen = (1 - 2 * refFrac) * slitMagHeight + 20;
   const wfX2 = wfAnchorX + perpDx * wfLen;
   const wfY2 = wfAnchorY + perpDy * wfLen;
   s += `<line x1="${wfAnchorX.toFixed(1)}" y1="${wfAnchorY.toFixed(1)}" x2="${wfX2.toFixed(1)}" y2="${wfY2.toFixed(1)}" stroke="var(--wave)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75"/>`;
@@ -579,17 +573,20 @@ function drawPhasors(p) {
   }
 
   // ---------- Dials (M of them, fixed) ----------
-  // Each dial represents the CENTER of strip k (of M strips). Phase is measured relative
-  // to the top dial (where the reference wavefront is anchored), so dial 0 reads 0°.
+  // Each dial sits at the CENTER of strip k (of M strips). To stay PERFECTLY consistent with
+  // the chain visualization, the dial reads the phase of the chain-marker phasor of color k,
+  // i.e., φ = markerIdx[k] · dphi (where markerIdx[k] is the integer chain index that gets
+  // color k). This guarantees that the blue dial matches the blue chain marker, etc., for any
+  // N. At N = M = 5: markerIdx[k] = k → dial k reads k·dphi (e.g., dial 0 reads 0°, unchanged).
+  // At N > M: dial 0 reads markerIdx[0]·dphi (a non-zero phase that grows with θ), reflecting
+  // that the colored "blue" representative phasor in the chain is at chain-index markerIdx[0],
+  // not at index 0.
   for (let k = 0; k < M; k++) {
     const frac = (k + 0.5) / M;
     const dialCy = slitTopY + frac * slitMagHeight;
     const col = phasorColor(k / (M - 1));
-    // Phase relative to top dial: source offset below top dial × sinθ, in λ units.
-    // (frac − topDialFrac)·slitMagHeight is the pixel offset; dividing by lamVis = slitMagHeight/b
-    // gives the offset in λ units. So:
-    //   φ = 2π · (frac − topDialFrac) · b · sinθ
-    const phi = 2 * Math.PI * (frac - topDialFrac) * state.b * Math.sin(thRad);
+    // Dial reads exactly the chain-marker's phase
+    const phi = markerIdx[k] * p.dphi;
 
     // Dial circle
     s += `<circle cx="${dialCx}" cy="${dialCy}" r="${dialR}" fill="var(--paper)" stroke="var(--rule)" stroke-width="1"/>`;
@@ -702,6 +699,7 @@ function drawPhasors(p) {
   const readoutY = 50;
   s += `<text x="${readoutCx}" y="${readoutY}" font-family="Cormorant Garamond" font-style="italic" font-size="24" fill="var(--resultant)" text-anchor="middle" font-weight="600">E(θ)</text>`;
   s += `<text x="${readoutCx}" y="${readoutY + 22}" font-family="JetBrains Mono" font-size="12" fill="var(--resultant)" text-anchor="middle">|E| / E₀ = ${Math.abs(p.amp).toFixed(3)}</text>`;
+  s += `<text x="${readoutCx}" y="${readoutY + 40}" font-family="JetBrains Mono" font-size="12" fill="var(--resultant)" text-anchor="middle">I / I₀ = ${p.intensity.toFixed(3)}</text>`;
 
   svg.innerHTML = s;
 }

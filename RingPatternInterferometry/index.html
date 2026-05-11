@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interferometer Ring Pattern</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --ink: #1a1a1a;
+      --paper: #faf8f3;
+      --accent: #b8341f;
+      --wave: #2c5f7c;
+      --warm: #d97420;
+      --good: #2f9e44;
+      --grid: #d8d2c4;
+      --muted: #6b6459;
+      --rule: #2a2520;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 20% 10%, rgba(184, 52, 31, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(44, 95, 124, 0.04) 0%, transparent 40%);
+    }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    header {
+      border-bottom: 2px solid var(--rule);
+      padding: 14px 32px 12px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      top: 4px; left: 32px; right: 32px;
+      height: 1px;
+      background: var(--rule);
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      padding: 18px 32px 28px;
+      max-width: 1700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      padding: 14px 18px 16px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-label {
+      position: absolute;
+      top: -9px;
+      left: 18px;
+      background: var(--bg);
+      padding: 0 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .geom-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 40px;
+      gap: 10px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+    }
+    #geomCanvas, #stripCanvas {
+      width: 100%;
+      height: min(82vh, 760px);
+      display: block;
+    }
+    #geomCanvas { background: var(--paper); }
+    #stripCanvas { background: var(--paper); border: 1px solid var(--grid); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .swatch {
+      width: 14px; height: 3px;
+      flex-shrink: 0;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .control-group {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      padding: 14px 18px;
+    }
+    .control-group h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--grid);
+    }
+    label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    /* Individual slider frame — visually separates each parameter so it's clear which
+       value belongs to which slider. */
+    .param-item {
+      border: 1px solid var(--grid);
+      background: var(--bg);
+      padding: 8px 10px 6px;
+      margin-bottom: 8px;
+    }
+    .param-item:last-child { margin-bottom: 0; }
+    .param-item .slider-row { margin-bottom: 4px; }
+    .param-item input[type="range"] { margin-bottom: 0; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 2px;
+      background: var(--rule);
+      outline: none;
+      margin-bottom: 14px;
+    }
+    input[type="range"]:last-child { margin-bottom: 2px; }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--rule);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--rule);
+    }
+
+    .signature {
+      position: fixed;
+      right: 14px;
+      bottom: 8px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Interferometer Ring Pattern</h1>
+</header>
+
+<main>
+
+  <div class="panel" style="flex: 1;">
+    <span class="panel-label">Virtual-Source Geometry &amp; Screen Brightness</span>
+    <div class="legend">
+      <div class="legend-item"><div class="swatch-dot" style="background: var(--wave);"></div>Virtual source S₁ (arm 1)</div>
+      <div class="legend-item"><div class="swatch-dot" style="background: var(--warm);"></div>Virtual source S₂ (arm 2)</div>
+      <div class="legend-item"><div class="swatch" style="background: var(--good);"></div>Screen</div>
+    </div>
+    <div class="geom-row">
+      <canvas id="geomCanvas"></canvas>
+      <canvas id="stripCanvas"></canvas>
+    </div>
+  </div>
+
+  <aside>
+    <div class="control-group">
+      <h3>Parameters</h3>
+
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Arm length difference <span style="text-transform:none; letter-spacing:0;">ΔL (λ)</span></label>
+          <span class="value" id="deltaLOut">2.0 λ</span>
+        </div>
+        <input id="deltaL" type="range" min="0" max="8" value="2" step="0.1">
+      </div>
+
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
+          <span class="value" id="lambdaOut">0.15</span>
+        </div>
+        <input id="lambda" type="range" min="0.05" max="2.0" value="0.15" step="0.01">
+      </div>
+
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Beam half-angle <span style="text-transform:none; letter-spacing:0;">(deg)</span></label>
+          <span class="value" id="coneAngleOut">45°</span>
+        </div>
+        <input id="coneAngle" type="range" min="5" max="45" value="45" step="1">
+      </div>
+
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Lateral offset of <span style="text-transform:none; letter-spacing:0;">S₂</span></label>
+          <span class="value" id="yOffsetOut">0.0</span>
+        </div>
+        <input id="yOffset" type="range" min="-3" max="3" value="0" step="0.1">
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="signature">RM</div>
+
+<script>
+  // Fixed distance of S₁ from the screen (the slider for this was removed)
+  const L_FIXED = 80;
+
+  let LAMBDA = 0.15;
+  const Y_MAX  = 12;
+
+  function setupCanvas(canvas){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width  || 400;
+    const h = rect.height || 260;
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = {
+    bg:     cssVar('--paper') || '#faf8f3',
+    ink:    cssVar('--ink')   || '#1a1a1a',
+    muted:  cssVar('--muted') || '#6b6459',
+    grid:   cssVar('--grid')  || '#d8d2c4',
+    wave:   cssVar('--wave')  || '#2c5f7c',
+    warm:   cssVar('--warm')  || '#d97420',
+    good:   cssVar('--good')  || '#2f9e44',
+    accent: cssVar('--accent')|| '#b8341f',
+  };
+  function hexToRgba(hex, a) {
+    const h = hex.replace('#','');
+    const v = h.length === 3
+      ? h.split('').map(c => parseInt(c+c, 16))
+      : [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    return `rgba(${v[0]}, ${v[1]}, ${v[2]}, ${a})`;
+  }
+  function hexToRGB(hex) {
+    const h = hex.replace('#','');
+    const v = h.length === 3
+      ? h.split('').map(c => parseInt(c+c, 16))
+      : [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    return { r: v[0], g: v[1], b: v[2] };
+  }
+
+  const geomCanvas  = document.getElementById('geomCanvas');
+  const stripCanvas = document.getElementById('stripCanvas');
+  let gctx, gw, gh, sctx, sw, sh;
+
+  function resizeAll(){
+    ({ ctx: gctx, w: gw, h: gh } = setupCanvas(geomCanvas));
+    ({ ctx: sctx, w: sw, h: sh } = setupCanvas(stripCanvas));
+  }
+  resizeAll();
+  window.addEventListener('resize', () => { resizeAll(); renderAll(); });
+
+  const ui = {
+    deltaL:       document.getElementById('deltaL'),
+    lambda:       document.getElementById('lambda'),
+    coneAngle:    document.getElementById('coneAngle'),
+    yOffset:      document.getElementById('yOffset'),
+    deltaLOut:    document.getElementById('deltaLOut'),
+    lambdaOut:    document.getElementById('lambdaOut'),
+    coneAngleOut: document.getElementById('coneAngleOut'),
+    yOffsetOut:   document.getElementById('yOffsetOut'),
+  };
+
+  function syncLabels(){
+    ui.deltaLOut.textContent    = Number(ui.deltaL.value).toFixed(1) + ' λ';
+    ui.lambdaOut.textContent    = Number(ui.lambda.value).toFixed(2);
+    ui.coneAngleOut.textContent = Number(ui.coneAngle.value).toFixed(0) + '°';
+    ui.yOffsetOut.textContent   = Number(ui.yOffset.value).toFixed(1);
+  }
+  ['input','change'].forEach(ev => {
+    ui.deltaL.addEventListener   (ev, () => { syncLabels(); renderAll(); });
+    ui.lambda.addEventListener   (ev, () => { syncLabels(); renderAll(); });
+    ui.coneAngle.addEventListener(ev, () => { syncLabels(); renderAll(); });
+    ui.yOffset.addEventListener  (ev, () => { syncLabels(); renderAll(); });
+  });
+  syncLabels();
+
+  function pathDiffY(y, L, deltaL, yOff){
+    const Delta = deltaL * LAMBDA;
+    const L2 = L - Delta;
+    const r1 = Math.sqrt(L*L + y*y);
+    const r2 = Math.sqrt(L2*L2 + (y - yOff)*(y - yOff));
+    return r1 - r2;
+  }
+
+  function drawGeometryAndStrip(){
+    if (!gctx || !sctx) return;
+
+    LAMBDA = Number(ui.lambda.value);
+
+    const L      = L_FIXED;
+    const deltaL = Number(ui.deltaL.value);
+    const yOff   = Number(ui.yOffset.value);
+    const coneDeg = Number(ui.coneAngle.value);
+    const coneRad = coneDeg * Math.PI / 180;
+    const Delta  = deltaL * LAMBDA;
+
+    const zS1 = -L;
+    const zS2 = -(L - Delta);
+    const yS1 = 0;
+    const yS2 = yOff;
+    const zScreen = 0;
+
+    const marginLeft  = 28;
+    const marginRight = 6;
+    const Z_EXTRA     = 8;
+
+    const zMin  = -L - Z_EXTRA;
+    const zMax  = 0;
+    const zSpan = zMax - zMin;
+
+    const scale = (gw - marginLeft - marginRight) / zSpan;
+
+    function toX(z){ return marginLeft + (z - zMin) * scale; }
+    function toY(y){ return gh/2 - y * scale; }
+
+    const ctx = gctx;
+    ctx.clearRect(0, 0, gw, gh);
+
+    // Background and faint grid
+    ctx.save();
+    ctx.fillStyle = COL.bg;
+    ctx.fillRect(0, 0, gw, gh);
+
+    ctx.strokeStyle = hexToRgba(COL.grid, 0.7);
+    ctx.lineWidth = 1;
+    const nGridV = 5;
+    for (let i = 1; i <= nGridV; i++){
+      const z = zMin + (i / (nGridV + 1)) * (zMax - zMin);
+      const x = toX(z);
+      ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x, gh);
+      ctx.stroke();
+    }
+    // Horizontal centerline (y=0 reference)
+    ctx.strokeStyle = hexToRgba(COL.grid, 0.5);
+    ctx.beginPath();
+    ctx.moveTo(0, toY(0)); ctx.lineTo(gw, toY(0));
+    ctx.stroke();
+    ctx.restore();
+
+    // Screen
+    ctx.save();
+    ctx.strokeStyle = COL.good;
+    ctx.lineWidth = 2;
+    const xScreen = toX(zScreen);
+    ctx.beginPath();
+    ctx.moveTo(xScreen, toY(-Y_MAX));
+    ctx.lineTo(xScreen, toY( Y_MAX));
+    ctx.stroke();
+    ctx.restore();
+
+    // Sources
+    const xS1 = toX(zS1);
+    const yS1pix = toY(yS1);
+    const xS2 = toX(zS2);
+    const yS2pix = toY(yS2);
+
+    ctx.save();
+    ctx.fillStyle = COL.wave;
+    ctx.beginPath();
+    ctx.arc(xS1, yS1pix, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COL.warm;
+    ctx.beginPath();
+    ctx.arc(xS2, yS2pix, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Labels — serif italic, matching the suite
+    ctx.save();
+    ctx.fillStyle = COL.ink;
+    ctx.font = "italic 14px 'Cormorant Garamond', serif";
+    ctx.textAlign = 'left';
+    ctx.fillText('S₁', xS1 + 9, yS1pix - 6);
+    ctx.fillText('S₂', xS2 + 9, yS2pix - 6);
+    ctx.fillStyle = COL.muted;
+    ctx.font = "italic 12px 'Cormorant Garamond', serif";
+    ctx.textAlign = 'right';
+    ctx.fillText('screen', xScreen - 6, toY(Y_MAX) + 14);
+    ctx.restore();
+
+    // Wavefronts
+    const maxDist = Math.sqrt(L*L + Y_MAX*Y_MAX);
+    const nSurfaces = Math.ceil((maxDist + 1) / LAMBDA);
+    const Ny = 260;
+
+    function drawWavefronts(z0, y0, color){
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      for (let n = 1; n <= nSurfaces; n++){
+        const radius = n * LAMBDA;
+        let first = true;
+        ctx.beginPath();
+        for (let i = 0; i <= Ny; i++){
+          const yWorld = -Y_MAX + (i / Ny) * (2 * Y_MAX);
+          const dy = yWorld - y0;
+          const rad2 = radius * radius - dy * dy;
+          if (rad2 <= 0) continue;
+          const dz = Math.sqrt(rad2);
+          const zWorld = z0 + dz;
+          if (zWorld > zScreen) continue;
+          const theta = Math.atan2(Math.abs(dy), dz);
+          if (theta > coneRad) continue;
+          const xPix = toX(zWorld);
+          const yPix = toY(yWorld);
+          if (first) { ctx.moveTo(xPix, yPix); first = false; }
+          else ctx.lineTo(xPix, yPix);
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.save();
+    drawWavefronts(zS1, yS1, hexToRgba(COL.wave, 0.55));
+    drawWavefronts(zS2, yS2, hexToRgba(COL.warm, 0.55));
+    ctx.restore();
+
+    // ----- Brightness strip (right side) -----
+    const ctxS = sctx;
+    ctxS.clearRect(0, 0, sw, sh);
+    ctxS.save();
+    ctxS.fillStyle = COL.bg;
+    ctxS.fillRect(0, 0, sw, sh);
+    ctxS.restore();
+
+    // Map intensity I in [0,1] → color between ink (dark) and near-white (bright).
+    // Dark fringes → ink color; bright fringes → near-paper. Maximum contrast against the
+    // page's cream background, physically faithful to "bright/dark" interpretation.
+    const inkRGB = hexToRGB(COL.ink);
+    const brightR = 250, brightG = 248, brightB = 240;
+
+    const nSamplesStrip = Math.max(sh, 200);
+    const barLeft = 4;
+    const barRight = sw - 4;
+
+    for (let i = 0; i <= nSamplesStrip; i++){
+      const frac = i / nSamplesStrip;
+      const yWorld = -Y_MAX + frac * (2 * Y_MAX);
+
+      const yGeom = toY(yWorld);
+      const yPix  = (yGeom / gh) * sh;
+
+      const dL = pathDiffY(yWorld, L, deltaL, yOff);
+      const phase = 2 * Math.PI * (dL / LAMBDA);
+      const I = 0.5 * (1 + Math.cos(phase));
+
+      const rCol = inkRGB.r + (brightR - inkRGB.r) * I;
+      const gCol = inkRGB.g + (brightG - inkRGB.g) * I;
+      const bCol = inkRGB.b + (brightB - inkRGB.b) * I;
+      ctxS.strokeStyle = `rgb(${rCol|0},${gCol|0},${bCol|0})`;
+
+      ctxS.beginPath();
+      ctxS.moveTo(barLeft, yPix);
+      ctxS.lineTo(barRight, yPix);
+      ctxS.stroke();
+    }
+
+    // Faint centerline marker (y=0) on the strip for reference
+    const yZeroGeom = toY(0);
+    const yZeroPix  = (yZeroGeom / gh) * sh;
+    ctxS.save();
+    ctxS.strokeStyle = hexToRgba(COL.grid, 0.6);
+    ctxS.lineWidth = 1;
+    ctxS.beginPath();
+    ctxS.moveTo(0, yZeroPix);
+    ctxS.lineTo(sw, yZeroPix);
+    ctxS.stroke();
+    ctxS.restore();
+  }
+
+  function renderAll(){ drawGeometryAndStrip(); }
+
+  // Wait one frame so the layout settles before measuring canvas size
+  requestAnimationFrame(() => { resizeAll(); renderAll(); });
+</script>
+</body>
+</html>

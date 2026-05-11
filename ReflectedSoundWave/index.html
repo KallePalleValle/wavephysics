@@ -334,14 +334,6 @@
 
       <div class="param-item">
         <div class="slider-row">
-          <label>Phase <span style="text-transform:none; letter-spacing:0;">ϕ</span></label>
-          <span class="value" id="sigmaVal">0.00</span>
-        </div>
-        <input id="sigma" type="range" min="0.00" max="6.28" step="0.01" value="0.00" />
-      </div>
-
-      <div class="param-item">
-        <div class="slider-row">
           <label>Amplitude <span style="text-transform:none; letter-spacing:0;">A</span></label>
           <span class="value" id="ampVal">0.65</span>
         </div>
@@ -428,13 +420,11 @@
     tVal: document.getElementById('tVal'),
 
     lambda: document.getElementById('lambda'),
-    sigma: document.getElementById('sigma'),
     amp: document.getElementById('amp'),
     ts: document.getElementById('ts'),
     n: document.getElementById('n'),
 
     lambdaVal: document.getElementById('lambdaVal'),
-    sigmaVal: document.getElementById('sigmaVal'),
     ampVal: document.getElementById('ampVal'),
     tsVal: document.getElementById('tsVal'),
     nVal: document.getElementById('nVal'),
@@ -544,7 +534,7 @@
 
   function readParams() {
     const lambda = parseFloat(el.lambda.value);
-    const phi = parseFloat(el.sigma.value);
+    const phi = 0;                          // phase slider removed; phi is fixed at 0
     const A = parseFloat(el.amp.value);
     const v = V_FIXED;
     const play = parseFloat(el.ts.value);
@@ -562,7 +552,6 @@
     }
 
     el.lambdaVal.textContent = lambda.toFixed(2);
-    el.sigmaVal.textContent = phi.toFixed(2);
     el.ampVal.textContent = A.toFixed(2);
     el.tsVal.textContent = play.toFixed(2);
     el.nVal.textContent = String(N);
@@ -823,11 +812,32 @@
     }
     ctx.restore();
 
-    // Particles — each row uses its own wave function
+    // Particles — each row uses its own wave function.
+    //
+    // The incident and reflected rows are pedagogical decompositions of the actual field —
+    // each, alone, is a travelling wave that doesn't know about the boundary. At finite
+    // visualization amplitude, particles in those rows can drift past x = L, which is
+    // visually awkward (especially against a rigid wall). To keep the picture clean we
+    // fade those two rows out over the last 1/10 of the medium, so the per-component
+    // particles disappear smoothly before the boundary. The TOTAL row is not faded —
+    // it's the physical field, and at a rigid wall u_total(L,t) = 0 already keeps the
+    // particles in place; at an open end, the antinode behavior is the physically
+    // correct picture.
+    const fadeStart = 0.9 * L;     // start fading at 90% of the length
+    function fadeOpacity(p, x0InLambdas) {
+      if (p.r === 2) return 1.0;   // TOTAL row never fades
+      if (x0InLambdas <= fadeStart) return 1.0;
+      const f = (x0InLambdas - fadeStart) / (L - fadeStart);    // 0 at fadeStart → 1 at L
+      return Math.max(0, 1 - f);
+    }
+
     ctx.save();
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       if (!rowDefs[p.r].visible) continue;
+      const opacity = fadeOpacity(p, p.x0);
+      if (opacity <= 0.01) continue;
+
       const u = rowDefs[p.r].fn(p.x0);
       const x = xToPx(p.x0) + u * dispPx;
       const y = rowYs[p.r];
@@ -842,6 +852,7 @@
         }
       }
 
+      ctx.globalAlpha = opacity;
       if (isExample) {
         ctx.fillStyle = COL.good;
         ctx.strokeStyle = COL.paper;
@@ -857,6 +868,7 @@
         ctx.fill();
       }
     }
+    ctx.globalAlpha = 1.0;
     ctx.restore();
 
     // ===== Pressure curves =====

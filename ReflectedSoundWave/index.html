@@ -154,6 +154,17 @@
       align-items: baseline;
       margin-bottom: 6px;
     }
+    /* Individual slider frame — visually separates each parameter so it's clear which
+       value belongs to which slider. */
+    .param-item {
+      border: 1px solid var(--grid);
+      background: var(--bg);
+      padding: 8px 10px 6px;
+      margin-bottom: 8px;
+    }
+    .param-item:last-child { margin-bottom: 0; }
+    .param-item .slider-row { margin-bottom: 4px; }
+    .param-item input[type="range"] { margin-bottom: 0; }
     input[type="range"] {
       -webkit-appearance: none;
       width: 100%;
@@ -305,41 +316,53 @@
     <div class="control-group">
       <h3>Parameters</h3>
 
-      <div class="slider-row">
-        <label>Time <span style="text-transform:none; letter-spacing:0;">t</span></label>
-        <span class="value" id="tVal">0.00</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Time <span style="text-transform:none; letter-spacing:0;">t</span></label>
+          <span class="value" id="tVal">0.00</span>
+        </div>
+        <input id="time" type="range" min="0.00" max="10.00" step="0.001" value="0.00" />
       </div>
-      <input id="time" type="range" min="0.00" max="10.00" step="0.001" value="0.00" />
 
-      <div class="slider-row">
-        <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
-        <span class="value" id="lambdaVal">0.35</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
+          <span class="value" id="lambdaVal">0.35</span>
+        </div>
+        <input id="lambda" type="range" min="0.10" max="0.80" step="0.01" value="0.35" />
       </div>
-      <input id="lambda" type="range" min="0.10" max="0.80" step="0.01" value="0.35" />
 
-      <div class="slider-row">
-        <label>Phase <span style="text-transform:none; letter-spacing:0;">ϕ</span></label>
-        <span class="value" id="sigmaVal">0.00</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Phase <span style="text-transform:none; letter-spacing:0;">ϕ</span></label>
+          <span class="value" id="sigmaVal">0.00</span>
+        </div>
+        <input id="sigma" type="range" min="0.00" max="6.28" step="0.01" value="0.00" />
       </div>
-      <input id="sigma" type="range" min="0.00" max="6.28" step="0.01" value="0.00" />
 
-      <div class="slider-row">
-        <label>Amplitude <span style="text-transform:none; letter-spacing:0;">A</span></label>
-        <span class="value" id="ampVal">0.65</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Amplitude <span style="text-transform:none; letter-spacing:0;">A</span></label>
+          <span class="value" id="ampVal">0.65</span>
+        </div>
+        <input id="amp" type="range" min="0.00" max="1.00" step="0.01" value="0.65" />
       </div>
-      <input id="amp" type="range" min="0.00" max="1.00" step="0.01" value="0.65" />
 
-      <div class="slider-row">
-        <label>Playback speed</label>
-        <span class="value" id="tsVal">0.25</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Playback speed</label>
+          <span class="value" id="tsVal">0.25</span>
+        </div>
+        <input id="ts" type="range" min="0.00" max="1.00" step="0.01" value="0.25" />
       </div>
-      <input id="ts" type="range" min="0.00" max="1.00" step="0.01" value="0.25" />
 
-      <div class="slider-row">
-        <label>Particles <span style="text-transform:none; letter-spacing:0;">N</span></label>
-        <span class="value" id="nVal">140</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Particles <span style="text-transform:none; letter-spacing:0;">N</span></label>
+          <span class="value" id="nVal">140</span>
+        </div>
+        <input id="n" type="range" min="40" max="220" step="1" value="140" />
       </div>
-      <input id="n" type="range" min="40" max="220" step="1" value="140" />
     </div>
 
     <div class="control-group">
@@ -574,24 +597,38 @@
     // Visual gain for particle displacement
     const dispPx = 30 * params.A;
 
-    // Boundary wall — dark ink with hatching on the outside
+    // Boundary: rigid wall → solid ink line + hatching (matter on the other side);
+    //           open end   → dashed thin line, no hatching (free space on the other side).
     const wallX = xToPx(L);
     ctx.save();
-    ctx.strokeStyle = COL.ink;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(wallX, top);
-    ctx.lineTo(wallX, bottom);
-    ctx.stroke();
-
-    // Barrier hatching outside the wall (right side)
-    ctx.lineWidth = 0.8;
-    ctx.strokeStyle = hexToRgba(COL.ink, 0.7);
-    for (let y = top + 4; y < bottom - 4; y += 9) {
+    if (params.boundary === 'fixed') {
+      ctx.strokeStyle = COL.ink;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.moveTo(wallX, y + 7);
-      ctx.lineTo(wallX + 8, y);
+      ctx.moveTo(wallX, top);
+      ctx.lineTo(wallX, bottom);
       ctx.stroke();
+
+      // Hatching outside the wall (right side)
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = hexToRgba(COL.ink, 0.7);
+      for (let y = top + 4; y < bottom - 4; y += 9) {
+        ctx.beginPath();
+        ctx.moveTo(wallX, y + 7);
+        ctx.lineTo(wallX + 8, y);
+        ctx.stroke();
+      }
+    } else {
+      // Open end — dashed, no hatching
+      ctx.strokeStyle = hexToRgba(COL.ink, 0.55);
+      ctx.lineWidth = 1.3;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(wallX, top);
+      ctx.lineTo(wallX, bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Wall label — italic serif
@@ -747,44 +784,65 @@
     }
 
     // ===== Particle rows =====
-    const rowSpacing = 22;
+    // Three rows, each driven by a different wave component:
+    //   row 0 (top)    = INCIDENT wave   (uInc)         → blue
+    //   row 1 (middle) = REFLECTED wave  (uRefl)        → orange
+    //   row 2 (bottom) = TOTAL wave      (uInc + uRefl) → green
+    // Rows respect the show-curves checkboxes — if "show Incident" is unchecked, the
+    // incident row hides (and so on).
+    const rowSpacing = 28;
     const rowYs = rowOffsets.map((o) => baseY + o * rowSpacing);
 
-    // Guide lines
+    const rowDefs = [
+      { label: 'INCIDENT',  fn: (x) => uInc(x, tt, params.A, params.k, params.v, params.phi),
+        color: COL.wave,    visible: el.showInc.checked   },
+      { label: 'REFLECTED', fn: (x) => uRefl(x, tt, params),
+        color: COL.warm,    visible: el.showRefl.checked  },
+      { label: 'TOTAL',     fn: (x) => uTotal(x, tt, params),
+        color: COL.good,    visible: el.showTotal.checked },
+    ];
+
+    // Per-row guide lines + per-row labels (only for visible rows). Each row is itself
+    // labeled (INCIDENT / REFLECTED / TOTAL) so a separate "AIR PARTICLES" section header
+    // would be redundant.
     ctx.save();
-    ctx.strokeStyle = COL.grid;
     ctx.lineWidth = 1;
-    for (const y of rowYs) {
+    for (let r = 0; r < ROWS; r++) {
+      if (!rowDefs[r].visible) continue;
+      ctx.strokeStyle = hexToRgba(rowDefs[r].color, 0.20);
       ctx.beginPath();
-      ctx.moveTo(left, y);
-      ctx.lineTo(right, y);
+      ctx.moveTo(left, rowYs[r]);
+      ctx.lineTo(right, rowYs[r]);
       ctx.stroke();
+
+      // Row label on the left
+      ctx.fillStyle = rowDefs[r].color;
+      ctx.font = FONT_MONO_LABEL;
+      ctx.textAlign = 'left';
+      ctx.fillText(rowDefs[r].label, left, rowYs[r] - 7);
     }
     ctx.restore();
 
-    // Section label (particles)
-    ctx.save();
-    ctx.fillStyle = COL.muted;
-    ctx.font = FONT_MONO_LABEL;
-    ctx.textAlign = 'left';
-    ctx.fillText('AIR PARTICLES', left, rowYs[0] - 14);
-    ctx.restore();
-
-    // Particles (use total displacement)
+    // Particles — each row uses its own wave function
     ctx.save();
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      const u = uTotal(p.x0, tt, params);
+      if (!rowDefs[p.r].visible) continue;
+      const u = rowDefs[p.r].fn(p.x0);
       const x = xToPx(p.x0) + u * dispPx;
       const y = rowYs[p.r];
 
-      // highlight example particles in green
-      let exMatch = false;
-      for (const ex of examples) {
-        if (Math.abs(p.x0 - ex.x) < exTol) { exMatch = true; break; }
+      // Example-particle highlighting (node/antinode/between) only on the TOTAL row,
+      // since those special positions are properties of the standing wave, not the
+      // individual incident/reflected travelling components.
+      let isExample = false;
+      if (p.r === 2) {
+        for (const ex of examples) {
+          if (Math.abs(p.x0 - ex.x) < exTol) { isExample = true; break; }
+        }
       }
 
-      if (exMatch) {
+      if (isExample) {
         ctx.fillStyle = COL.good;
         ctx.strokeStyle = COL.paper;
         ctx.lineWidth = 1.2;
@@ -793,9 +851,7 @@
         ctx.fill();
         ctx.stroke();
       } else {
-        // subtle row variation in ink opacity
-        const a = p.r === 0 ? 0.55 : (p.r === 1 ? 0.72 : 0.55);
-        ctx.fillStyle = hexToRgba(COL.ink, a);
+        ctx.fillStyle = hexToRgba(rowDefs[p.r].color, 0.85);
         ctx.beginPath();
         ctx.arc(x, y, 2.4, 0, Math.PI * 2);
         ctx.fill();

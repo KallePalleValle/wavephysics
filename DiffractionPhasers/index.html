@@ -149,6 +149,17 @@
     align-items: baseline;
     margin-bottom: 6px;
   }
+  /* Individual slider frame — visually separates each parameter so it's clear which
+     value belongs to which slider. */
+  .param-item {
+    border: 1px solid var(--grid);
+    background: var(--bg);
+    padding: 8px 10px 6px;
+    margin-bottom: 8px;
+  }
+  .param-item:last-child { margin-bottom: 0; }
+  .param-item .slider-row { margin-bottom: 4px; }
+  .param-item input[type="range"] { margin-bottom: 0; }
   input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
@@ -244,28 +255,34 @@
     <div class="control-group">
       <h3>Parameters</h3>
 
-      <div class="slider-row">
-        <label>Slit width <span style="text-transform:none; letter-spacing:0;">b / λ</span></label>
-        <span class="value" id="bVal">4.0</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Slit width <span style="text-transform:none; letter-spacing:0;">b / λ</span></label>
+          <span class="value" id="bVal">4.0</span>
+        </div>
+        <input type="range" id="bSlider" min="1" max="12" step="0.1" value="4">
       </div>
-      <input type="range" id="bSlider" min="1" max="12" step="0.1" value="4">
 
-      <div class="slider-row">
-        <label>Phasors <span style="text-transform:none; letter-spacing:0;">N</span></label>
-        <span class="value" id="nVal">5</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Phasors <span style="text-transform:none; letter-spacing:0;">N</span></label>
+          <span class="value" id="nVal">5</span>
+        </div>
+        <input type="range" id="nSlider" min="5" max="40" step="1" value="5">
       </div>
-      <input type="range" id="nSlider" min="5" max="40" step="1" value="5">
 
-      <div class="slider-row">
-        <label>Angle <span style="text-transform:none; letter-spacing:0;">θ (deg)</span></label>
-        <span class="value" id="angVal">0.0°</span>
+      <div class="param-item">
+        <div class="slider-row">
+          <label>Angle <span style="text-transform:none; letter-spacing:0;">θ (deg)</span></label>
+          <span class="value" id="angVal">0.0°</span>
+        </div>
+        <input type="range" id="angSlider" min="0" max="15" step="0.1" value="0">
       </div>
-      <input type="range" id="angSlider" min="0" max="15" step="0.1" value="0">
     </div>
   </aside>
 </main>
 
-<div class="signature">by RM</div>
+<div class="signature">RM</div>
 
 <script>
 const state = { b: 4.0, N: 5, theta: 0.0 };

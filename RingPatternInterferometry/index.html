@@ -69,8 +69,6 @@
       border: 1px solid var(--rule);
       padding: 14px 18px 16px;
       position: relative;
-      display: flex;
-      flex-direction: column;
     }
     .panel-label {
       position: absolute;
@@ -85,21 +83,43 @@
       color: var(--muted);
     }
 
+    /* Layout sequence (top to bottom inside the main panel):
+         1. Michelson schematic — full width, ~260 px tall, sits above everything
+         2. Geometry + 2D ring image — side by side, so the moiré-like wave pattern in the
+            geometry view directly couples to the visible ring pattern at the same y-axis.
+         3. Explanatory text — full width below.
+       This preserves the direct geometry-↔-rings visual link, the heart of the pedagogy. */
+
+    .michelson-row {
+      margin-bottom: 14px;
+    }
+    #michelsonCanvas {
+      width: 100%;
+      height: 280px;
+      display: block;
+      background: var(--paper);
+      border: 1px solid var(--grid);
+    }
+
     .geom-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 40px;
-      gap: 10px;
-      align-items: stretch;
-      flex: 1;
+      display: flex;
+      gap: 16px;
+      align-items: center;
       min-height: 0;
     }
-    #geomCanvas, #stripCanvas {
-      width: 100%;
-      height: min(82vh, 760px);
+    /* The geom canvas takes whatever width JS gives it; default to flex-1 for SSR/fallback. */
+    #geomCanvas {
+      flex: 0 0 auto;
       display: block;
+      background: var(--paper);
     }
-    #geomCanvas { background: var(--paper); }
-    #stripCanvas { background: var(--paper); border: 1px solid var(--grid); }
+    /* Ring canvas size is set in JS to match the geometry's screen-line height,
+       so it visually represents "the screen" at the same scale. */
+    #ringCanvas {
+      flex: 0 0 auto;
+      display: block;
+      border: 1px solid var(--grid);
+    }
 
     .legend {
       display: flex;
@@ -123,6 +143,21 @@
       width: 14px; height: 3px;
       flex-shrink: 0;
     }
+
+    /* Explanatory prose below the figure — quiet, muted, leaves the figure as the focus.
+       Uses Cormorant for a slight serif weight that contrasts with the JetBrains-Mono labels. */
+    .notes {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--grid);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .notes p { margin-bottom: 0.6em; }
+    .notes p:last-child { margin-bottom: 0; }
+    .notes em { font-style: italic; color: var(--ink); }
 
     aside {
       display: flex;
@@ -231,16 +266,51 @@
 
 <main>
 
-  <div class="panel" style="flex: 1;">
-    <span class="panel-label">Virtual-Source Geometry &amp; Screen Brightness</span>
+  <div class="panel">
+    <span class="panel-label">Michelson Setup · Virtual-Source Geometry · Ring Pattern</span>
     <div class="legend">
       <div class="legend-item"><div class="swatch-dot" style="background: var(--wave);"></div>Virtual source S₁ (arm 1)</div>
       <div class="legend-item"><div class="swatch-dot" style="background: var(--warm);"></div>Virtual source S₂ (arm 2)</div>
-      <div class="legend-item"><div class="swatch" style="background: var(--good);"></div>Screen</div>
+      <div class="legend-item"><div class="swatch" style="background: var(--good);"></div>Screen / detector</div>
     </div>
+
+    <div class="michelson-row">
+      <canvas id="michelsonCanvas"></canvas>
+    </div>
+
     <div class="geom-row">
       <canvas id="geomCanvas"></canvas>
-      <canvas id="stripCanvas"></canvas>
+      <canvas id="ringCanvas"></canvas>
+    </div>
+
+    <div class="notes">
+      <p>
+        A <em>Michelson interferometer</em> splits a single beam into two with a beam splitter,
+        sends each half down a separate arm to a mirror, and recombines them at the detector.
+        The sketch above shows the layout: light from the source meets the beam splitter (BS),
+        goes to mirror M₁ along arm 1 and to mirror M₂ along arm 2, and returns to interfere on
+        the detector.
+      </p>
+      <p>
+        From the detector's point of view, each mirror creates a <em>virtual image</em> of the
+        source — call them <em>S₁</em> and <em>S₂</em>. What the detector sees is therefore the
+        interference of two spherical waves coming from these two virtual sources. The middle
+        figure visualizes this: the wavefronts from S₁ and S₂ overlap, and where they meet
+        in phase the detector is bright; where they meet out of phase it is dark. The two
+        wavelengths must match — pairs of bright fringes are separated by one wavelength
+        of path difference.
+      </p>
+      <p>
+        When the two arm lengths are equal, S₁ and S₂ coincide and the detector is uniformly
+        bright. As <em>ΔL = L₁ − L₂</em> grows, the second arm shortens and S₂ shifts back
+        along the optical axis. Points on the detector at the same distance from both
+        sources form concentric circles, giving the famous <em>ring pattern</em> shown on
+        the right. The fringe spacing depends on the wavelength <em>λ</em> and on
+        <em>ΔL</em>. Tilting M₂ — the lateral-offset slider — shifts S₂ sideways: the rings
+        drift off-axis and eventually become nearly straight fringes, exactly what an
+        experimenter sees when the interferometer is not perfectly aligned. This is often 
+		done on purpose for easier redings.
+      </p>
     </div>
   </div>
 
@@ -261,15 +331,7 @@
           <label>Wavelength <span style="text-transform:none; letter-spacing:0;">λ</span></label>
           <span class="value" id="lambdaOut">0.15</span>
         </div>
-        <input id="lambda" type="range" min="0.20" max="2.0" value="0.25" step="0.01">
-      </div>
-
-      <div class="param-item">
-        <div class="slider-row">
-          <label>Beam half-angle <span style="text-transform:none; letter-spacing:0;">(deg)</span></label>
-          <span class="value" id="coneAngleOut">45°</span>
-        </div>
-        <input id="coneAngle" type="range" min="5" max="45" value="45" step="1">
+        <input id="lambda" type="range" min="0.05" max="2.0" value="0.15" step="0.01">
       </div>
 
       <div class="param-item">
@@ -286,11 +348,18 @@
 <div class="signature">RM</div>
 
 <script>
-  // Fixed distance of S₁ from the screen (the slider for this was removed)
-  const L_FIXED = 80;
+  // Fixed distance of S₁ from the screen (the slider for this was removed). The smaller
+  // this is relative to Y_MAX (the screen half-height), the more fringes appear across
+  // the screen for a given ΔL. At L = 20 with Y_MAX = 12, the screen subtends a ~30°
+  // half-angle, which gives a clearly visible ring pattern within the slider's range.
+  const L_FIXED = 20;
 
   let LAMBDA = 0.15;
-  const Y_MAX  = 12;
+  // Y_MAX: half-height of the screen / detector in physical units. Reduced from 12 to 10
+  // to shrink the panel height somewhat. Both the geometry view and the ring image still
+  // show exactly y ∈ [-Y_MAX, +Y_MAX], so they remain perfectly matched and the visible
+  // ring/fringe count at default ΔL is preserved.
+  const Y_MAX  = 10;
 
   function setupCanvas(canvas){
     const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -330,13 +399,47 @@
     return { r: v[0], g: v[1], b: v[2] };
   }
 
-  const geomCanvas  = document.getElementById('geomCanvas');
-  const stripCanvas = document.getElementById('stripCanvas');
-  let gctx, gw, gh, sctx, sw, sh;
+  const geomCanvas      = document.getElementById('geomCanvas');
+  const ringCanvas      = document.getElementById('ringCanvas');
+  const michelsonCanvas = document.getElementById('michelsonCanvas');
+  let gctx, gw, gh, rctx, rw, rh, mctx, mw, mh;
+
+  // GEOM_Z_EXTRA = how much empty z-space to draw to the LEFT of the sources.
+  const GEOM_MARGIN_LEFT  = 28;
+  const GEOM_MARGIN_RIGHT = 6;
+  const GEOM_Z_EXTRA      = 8;
+  const GEOM_Z_SPAN       = L_FIXED + GEOM_Z_EXTRA;
 
   function resizeAll(){
+    // Compute geometry and ring canvas sizes so that:
+    //   - The ring canvas is a square of side screenH
+    //   - The geometry canvas's screen line (height 2·Y_MAX·scale) equals screenH
+    //   - geom_width + ring_width + gap = available row width
+    // Solving:
+    //   scale = (geom_width - margins) / zSpan
+    //   screenH = 2 · Y_MAX · scale
+    //   ring_width = screenH
+    //   geom_width + screenH = total - gap
+    //   ⇒ geom_width · (1 + 2·Y_MAX/zSpan) = total - gap + 2·Y_MAX·margins/zSpan
+    const row = geomCanvas.closest('.geom-row');
+    const totalW = row ? row.clientWidth : 900;
+    const gap = 16;
+    const margins = GEOM_MARGIN_LEFT + GEOM_MARGIN_RIGHT;
+    const yFactor = 2 * Y_MAX / GEOM_Z_SPAN;
+    const geomW = (totalW - gap + yFactor * margins) / (1 + yFactor);
+    const screenH = 2 * Y_MAX * (geomW - margins) / GEOM_Z_SPAN;
+
+    const geomVerticalPadding = 10;
+    const geomH = screenH + 2 * geomVerticalPadding;
+
+    geomCanvas.style.width  = geomW + 'px';
+    geomCanvas.style.height = geomH + 'px';
+    ringCanvas.style.width  = screenH + 'px';
+    ringCanvas.style.height = screenH + 'px';
+
     ({ ctx: gctx, w: gw, h: gh } = setupCanvas(geomCanvas));
-    ({ ctx: sctx, w: sw, h: sh } = setupCanvas(stripCanvas));
+    ({ ctx: rctx, w: rw, h: rh } = setupCanvas(ringCanvas));
+    ({ ctx: mctx, w: mw, h: mh } = setupCanvas(michelsonCanvas));
   }
   resizeAll();
   window.addEventListener('resize', () => { resizeAll(); renderAll(); });
@@ -344,24 +447,20 @@
   const ui = {
     deltaL:       document.getElementById('deltaL'),
     lambda:       document.getElementById('lambda'),
-    coneAngle:    document.getElementById('coneAngle'),
     yOffset:      document.getElementById('yOffset'),
     deltaLOut:    document.getElementById('deltaLOut'),
     lambdaOut:    document.getElementById('lambdaOut'),
-    coneAngleOut: document.getElementById('coneAngleOut'),
     yOffsetOut:   document.getElementById('yOffsetOut'),
   };
 
   function syncLabels(){
     ui.deltaLOut.textContent    = Number(ui.deltaL.value).toFixed(1) + ' λ';
     ui.lambdaOut.textContent    = Number(ui.lambda.value).toFixed(2);
-    ui.coneAngleOut.textContent = Number(ui.coneAngle.value).toFixed(0) + '°';
     ui.yOffsetOut.textContent   = Number(ui.yOffset.value).toFixed(1);
   }
   ['input','change'].forEach(ev => {
     ui.deltaL.addEventListener   (ev, () => { syncLabels(); renderAll(); });
     ui.lambda.addEventListener   (ev, () => { syncLabels(); renderAll(); });
-    ui.coneAngle.addEventListener(ev, () => { syncLabels(); renderAll(); });
     ui.yOffset.addEventListener  (ev, () => { syncLabels(); renderAll(); });
   });
   syncLabels();
@@ -374,16 +473,15 @@
     return r1 - r2;
   }
 
-  function drawGeometryAndStrip(){
-    if (!gctx || !sctx) return;
+  function drawGeometry(){
+    if (!gctx) return;
 
     LAMBDA = Number(ui.lambda.value);
 
     const L      = L_FIXED;
     const deltaL = Number(ui.deltaL.value);
     const yOff   = Number(ui.yOffset.value);
-    const coneDeg = Number(ui.coneAngle.value);
-    const coneRad = coneDeg * Math.PI / 180;
+    const coneRad = 45 * Math.PI / 180;
     const Delta  = deltaL * LAMBDA;
 
     const zS1 = -L;
@@ -392,17 +490,13 @@
     const yS2 = yOff;
     const zScreen = 0;
 
-    const marginLeft  = 28;
-    const marginRight = 6;
-    const Z_EXTRA     = 8;
-
-    const zMin  = -L - Z_EXTRA;
+    const zMin  = -L - GEOM_Z_EXTRA;
     const zMax  = 0;
     const zSpan = zMax - zMin;
 
-    const scale = (gw - marginLeft - marginRight) / zSpan;
+    const scale = (gw - GEOM_MARGIN_LEFT - GEOM_MARGIN_RIGHT) / zSpan;
 
-    function toX(z){ return marginLeft + (z - zMin) * scale; }
+    function toX(z){ return GEOM_MARGIN_LEFT + (z - zMin) * scale; }
     function toY(y){ return gh/2 - y * scale; }
 
     const ctx = gctx;
@@ -469,6 +563,12 @@
     ctx.font = "italic 12px 'Cormorant Garamond', serif";
     ctx.textAlign = 'right';
     ctx.fillText('screen', xScreen - 6, toY(Y_MAX) + 14);
+    // Section label
+    ctx.fillStyle = COL.muted;
+    ctx.font = "10px 'JetBrains Mono', monospace";
+    ctx.textAlign = 'left';
+    const labelText = 'VIRTUAL SOURCE MODEL';
+    ctx.fillText(labelText, 14, 20);
     ctx.restore();
 
     // Wavefronts
@@ -505,61 +605,319 @@
     drawWavefronts(zS1, yS1, hexToRgba(COL.wave, 0.55));
     drawWavefronts(zS2, yS2, hexToRgba(COL.warm, 0.55));
     ctx.restore();
-
-    // ----- Brightness strip (right side) -----
-    const ctxS = sctx;
-    ctxS.clearRect(0, 0, sw, sh);
-    ctxS.save();
-    ctxS.fillStyle = COL.bg;
-    ctxS.fillRect(0, 0, sw, sh);
-    ctxS.restore();
-
-    // Map intensity I in [0,1] → color between ink (dark) and near-white (bright).
-    // Dark fringes → ink color; bright fringes → near-paper. Maximum contrast against the
-    // page's cream background, physically faithful to "bright/dark" interpretation.
-    const inkRGB = hexToRGB(COL.ink);
-    const brightR = 250, brightG = 248, brightB = 240;
-
-    const nSamplesStrip = Math.max(sh, 200);
-    const barLeft = 4;
-    const barRight = sw - 4;
-
-    for (let i = 0; i <= nSamplesStrip; i++){
-      const frac = i / nSamplesStrip;
-      const yWorld = -Y_MAX + frac * (2 * Y_MAX);
-
-      const yGeom = toY(yWorld);
-      const yPix  = (yGeom / gh) * sh;
-
-      const dL = pathDiffY(yWorld, L, deltaL, yOff);
-      const phase = 2 * Math.PI * (dL / LAMBDA);
-      const I = 0.5 * (1 + Math.cos(phase));
-
-      const rCol = inkRGB.r + (brightR - inkRGB.r) * I;
-      const gCol = inkRGB.g + (brightG - inkRGB.g) * I;
-      const bCol = inkRGB.b + (brightB - inkRGB.b) * I;
-      ctxS.strokeStyle = `rgb(${rCol|0},${gCol|0},${bCol|0})`;
-
-      ctxS.beginPath();
-      ctxS.moveTo(barLeft, yPix);
-      ctxS.lineTo(barRight, yPix);
-      ctxS.stroke();
-    }
-
-    // Faint centerline marker (y=0) on the strip for reference
-    const yZeroGeom = toY(0);
-    const yZeroPix  = (yZeroGeom / gh) * sh;
-    ctxS.save();
-    ctxS.strokeStyle = hexToRgba(COL.grid, 0.6);
-    ctxS.lineWidth = 1;
-    ctxS.beginPath();
-    ctxS.moveTo(0, yZeroPix);
-    ctxS.lineTo(sw, yZeroPix);
-    ctxS.stroke();
-    ctxS.restore();
   }
 
-  function renderAll(){ drawGeometryAndStrip(); }
+  // ----- 2D ring pattern (the screen as the observer would see it) -----
+  //
+  // Generalizes pathDiffY to two transverse dimensions. The screen point at (xs, ys) sees
+  // path difference r1 - r2 where:
+  //   r1 = sqrt(L² + xs² + ys²)                          // S₁ on axis at (0, 0, -L)
+  //   r2 = sqrt((L - Δ)² + xs² + (ys - yOff)²)           // S₂ at (0, yOff, -(L-Δ))
+  // Setting xs = 0 recovers the 1D formula used in pathDiffY exactly — so the vertical
+  // centerline of this image matches the 1D strip pixel-for-pixel (modulo discretization).
+  //
+  // Pixels are mapped at equal x/y scales so the rings remain circular. We use
+  // xs, ys ∈ [-Y_MAX, +Y_MAX] over the full canvas, with the y-axis aligned to the
+  // strip's y-axis (top = +Y_MAX, bottom = -Y_MAX).
+  function drawRingPattern(){
+    if (!rctx) return;
+
+    LAMBDA = Number(ui.lambda.value);
+
+    const L      = L_FIXED;
+    const deltaL = Number(ui.deltaL.value);
+    const yOff   = Number(ui.yOffset.value);
+    const Delta  = deltaL * LAMBDA;
+    const L2     = L - Delta;
+
+    // putImageData operates in raw pixel coordinates (ignoring ctx transforms), so we
+    // render at the canvas's backing-store resolution rather than the CSS resolution.
+    const W = ringCanvas.width;
+    const H = ringCanvas.height;
+    const img = rctx.createImageData(W, H);
+    const inkRGB = hexToRGB(COL.ink);
+    const brightR = 250, brightG = 248, brightB = 240;
+    const yMaxRange = Y_MAX;
+
+    const L1sq = L * L;
+    const L2sq = L2 * L2;
+
+    let idx = 0;
+    for (let py = 0; py < H; py++) {
+      const ys = (0.5 - py / H) * 2 * yMaxRange;
+      const dy = ys - yOff;
+      const dy2 = dy * dy;
+      const ys2 = ys * ys;
+      for (let px = 0; px < W; px++) {
+        const xs = (px / W - 0.5) * 2 * yMaxRange;
+        const xs2 = xs * xs;
+        const r1 = Math.sqrt(L1sq + xs2 + ys2);
+        const r2 = Math.sqrt(L2sq + xs2 + dy2);
+        const dL = r1 - r2;
+        const phase = 2 * Math.PI * (dL / LAMBDA);
+        const I = 0.5 * (1 + Math.cos(phase));
+        img.data[idx++] = (inkRGB.r + (brightR - inkRGB.r) * I) | 0;
+        img.data[idx++] = (inkRGB.g + (brightG - inkRGB.g) * I) | 0;
+        img.data[idx++] = (inkRGB.b + (brightB - inkRGB.b) * I) | 0;
+        img.data[idx++] = 255;
+      }
+    }
+    rctx.putImageData(img, 0, 0);
+
+    // Faint centerline cross (CSS coords — but ctx transform is set, so they map correctly)
+    rctx.save();
+    rctx.strokeStyle = hexToRgba(COL.grid, 0.35);
+    rctx.lineWidth = 1;
+    rctx.beginPath();
+    rctx.moveTo(0, rh / 2); rctx.lineTo(rw, rh / 2);
+    rctx.moveTo(rw / 2, 0); rctx.lineTo(rw / 2, rh);
+    rctx.stroke();
+    // Section label with a subtle backing rectangle so it stays readable against any fringe pattern
+    rctx.font = "10px 'JetBrains Mono', monospace";
+    rctx.textAlign = 'left';
+    rctx.textBaseline = 'top';
+    const labelMetric = rctx.measureText('RING PATTERN');
+    rctx.fillStyle = hexToRgba(COL.bg, 0.85);
+    rctx.fillRect(6, 6, labelMetric.width + 8, 14);
+    rctx.fillStyle = COL.muted;
+    rctx.fillText('RING PATTERN', 10, 8);
+    rctx.textBaseline = 'alphabetic';
+    rctx.restore();
+  }
+
+  // ----- Stylized Michelson interferometer schematic (canvas) -----
+  //
+  // Layout in canvas coordinates (drawn at the canvas's actual CSS size):
+  //
+  //                M₂   ←─ tilts when lateral-offset slider moves
+  //                │
+  //                │  L₂  ←─ shortens as ΔL grows
+  //                │
+  //   Source ──→ [BS] ──→ M₁    (horizontal arm 1)
+  //                │
+  //                ↓
+  //             Detector
+  //
+  // Canvas-based for reliability — pure 2D drawing API, no SVG namespace gotchas.
+  function drawMichelson(){
+    if (!mctx) return;
+    const ctx = mctx;
+    ctx.clearRect(0, 0, mw, mh);
+    ctx.fillStyle = COL.bg;
+    ctx.fillRect(0, 0, mw, mh);
+
+    const deltaL = Number(ui.deltaL.value);
+    const yOff   = Number(ui.yOffset.value);
+
+    // Logical layout in a 600×280 design space; scale to actual canvas size.
+    const designW = 600, designH = 280;
+    const sx = mw / designW;
+    const sy = mh / designH;
+    const s  = Math.min(sx, sy);     // uniform scale so the figure isn't distorted
+    const offX = (mw - designW * s) / 2;
+    const offY = (mh - designH * s) / 2;
+    const TX = (x) => offX + x * s;
+    const TY = (y) => offY + y * s;
+    const SS = (v) => v * s;          // scale a scalar (line width, font size)
+
+    // Anchor positions in design coordinates
+    const srcX = 70,   srcY = 165;
+    const bsX  = 250,  bsY  = 165;
+    const m1X  = 400,  m1Y  = 165;
+    const detX = 250,  detY = 255;
+
+    // Arm 2 visual length: full at ΔL=0, shortest at ΔL=8λ
+    const armLenFull = 130;
+    const armLenMin  = 55;
+    const fracDL = deltaL / 8;
+    const arm2Len = armLenFull - fracDL * (armLenFull - armLenMin);
+    const m2X = bsX;
+    const m2Y = bsY - arm2Len;
+
+    // Tilt of M₂ (yOff ∈ [-3, +3] → ±15°)
+    const tiltDeg = (yOff / 3) * 15;
+    const tiltRad = tiltDeg * Math.PI / 180;
+
+    // --- Section label (top-left corner) ---
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `${SS(11)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('REAL SETUP', TX(14), TY(10));
+    ctx.restore();
+
+    // --- Arm 1 horizontal beam: source → BS → M₁ ---
+    ctx.save();
+    ctx.strokeStyle = COL.wave;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = SS(2.2);
+    ctx.beginPath();
+    ctx.moveTo(TX(srcX + 10), TY(srcY));
+    ctx.lineTo(TX(m1X - 18), TY(m1Y));
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Arm 2 vertical beam: BS → M₂ ---
+    ctx.save();
+    ctx.strokeStyle = COL.warm;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = SS(2.2);
+    ctx.beginPath();
+    ctx.moveTo(TX(bsX), TY(bsY));
+    ctx.lineTo(TX(m2X), TY(m2Y + 10));
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Recombined beam: BS → Detector (dashed) ---
+    ctx.save();
+    ctx.strokeStyle = COL.ink;
+    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = SS(1.6);
+    ctx.setLineDash([SS(5), SS(5)]);
+    ctx.beginPath();
+    ctx.moveTo(TX(bsX), TY(bsY));
+    ctx.lineTo(TX(detX), TY(detY - 6));
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Source ---
+    ctx.save();
+    ctx.fillStyle = COL.ink;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(TX(srcX), TY(srcY), SS(10), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Source label
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `italic ${SS(15)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Source', TX(srcX), TY(srcY + 14));
+    ctx.restore();
+
+    // --- Beam splitter (45° diagonal) ---
+    ctx.save();
+    ctx.strokeStyle = COL.ink;
+    ctx.globalAlpha = 0.8;
+    ctx.lineWidth = SS(2.6);
+    const bsHalf = 22;
+    const bsDx = bsHalf / Math.SQRT2;
+    ctx.beginPath();
+    ctx.moveTo(TX(bsX - bsDx), TY(bsY - bsDx));
+    ctx.lineTo(TX(bsX + bsDx), TY(bsY + bsDx));
+    ctx.stroke();
+    ctx.restore();
+    // BS label
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `italic ${SS(15)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BS', TX(bsX + 28), TY(bsY - 22));
+    ctx.restore();
+
+    // --- Mirror M₁ (vertical line + hatching to the right) ---
+    ctx.save();
+    ctx.strokeStyle = COL.ink;
+    ctx.lineWidth = SS(3.2);
+    const m1HalfH = 18;
+    ctx.beginPath();
+    ctx.moveTo(TX(m1X), TY(m1Y - m1HalfH));
+    ctx.lineTo(TX(m1X), TY(m1Y + m1HalfH));
+    ctx.stroke();
+    // Hatching
+    ctx.lineWidth = SS(1.1);
+    for (let d = -m1HalfH + 3; d < m1HalfH - 2; d += 5) {
+      ctx.beginPath();
+      ctx.moveTo(TX(m1X), TY(m1Y + d + 4));
+      ctx.lineTo(TX(m1X + 7), TY(m1Y + d));
+      ctx.stroke();
+    }
+    ctx.restore();
+    // M₁ label
+    ctx.save();
+    ctx.fillStyle = COL.ink;
+    ctx.font = `italic ${SS(17)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('M₁', TX(m1X + 22), TY(m1Y));
+    ctx.restore();
+
+    // L₁ label along the horizontal arm
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `italic ${SS(15)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('L₁', TX((bsX + m1X) / 2), TY(m1Y - 8));
+    ctx.restore();
+
+    // --- Mirror M₂ (horizontal line + hatching upward, rotated by tiltRad) ---
+    ctx.save();
+    ctx.translate(TX(m2X), TY(m2Y));
+    ctx.rotate(tiltRad);
+    ctx.strokeStyle = COL.ink;
+    ctx.lineWidth = SS(3.2);
+    const m2HalfW = 18;
+    ctx.beginPath();
+    ctx.moveTo(SS(-m2HalfW), 0);
+    ctx.lineTo(SS(m2HalfW), 0);
+    ctx.stroke();
+    // Hatching
+    ctx.lineWidth = SS(1.1);
+    for (let d = -m2HalfW + 3; d < m2HalfW - 2; d += 5) {
+      ctx.beginPath();
+      ctx.moveTo(SS(d), SS(-7));
+      ctx.lineTo(SS(d + 4), 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // M₂ label (not rotated, so it stays readable)
+    ctx.save();
+    ctx.fillStyle = COL.ink;
+    ctx.font = `italic ${SS(17)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('M₂', TX(m2X - 24), TY(m2Y));
+    ctx.restore();
+
+    // L₂ label along the vertical arm
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `italic ${SS(15)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('L₂', TX(m2X + 14), TY((bsY + m2Y) / 2));
+    ctx.restore();
+
+    // --- Detector ---
+    ctx.save();
+    ctx.strokeStyle = COL.good;
+    ctx.lineWidth = SS(3.2);
+    const detHalfW = 32;
+    ctx.beginPath();
+    ctx.moveTo(TX(detX - detHalfW), TY(detY));
+    ctx.lineTo(TX(detX + detHalfW), TY(detY));
+    ctx.stroke();
+    ctx.restore();
+    // Detector label
+    ctx.save();
+    ctx.fillStyle = COL.muted;
+    ctx.font = `italic ${SS(15)}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Detector', TX(detX), TY(detY + 8));
+    ctx.restore();
+  }
+
+  function renderAll(){
+    drawGeometry();
+    drawRingPattern();
+    drawMichelson();
+  }
 
   // Wait one frame so the layout settles before measuring canvas size
   requestAnimationFrame(() => { resizeAll(); renderAll(); });
